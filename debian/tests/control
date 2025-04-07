@@ -1,0 +1,19 @@
+Test-Command: /usr/share/cargo/bin/cargo-auto-test openssl-sys 0.9.107 --all-targets --all-features
+Features: test-name=rust-openssl-sys:@
+Depends: dh-cargo (>= 31), rustc (>= 1.63.0), @
+Restrictions: allow-stderr, skip-not-installable
+
+Test-Command: /usr/share/cargo/bin/cargo-auto-test openssl-sys 0.9.107 --all-targets --no-default-features --features bindgen
+Features: test-name=librust-openssl-sys-dev:bindgen
+Depends: dh-cargo (>= 31), rustc (>= 1.63.0), @
+Restrictions: allow-stderr, skip-not-installable
+
+Test-Command: /usr/share/cargo/bin/cargo-auto-test openssl-sys 0.9.107 --all-targets
+Features: test-name=librust-openssl-sys-dev:default
+Depends: dh-cargo (>= 31), rustc (>= 1.63.0), @
+Restrictions: allow-stderr, skip-not-installable
+
+Test-Command: /usr/share/cargo/bin/cargo-auto-test openssl-sys 0.9.107 --all-targets --no-default-features
+Features: test-name=librust-openssl-sys-dev:
+Depends: dh-cargo (>= 31), rustc (>= 1.63.0), @
+Restrictions: allow-stderr, skip-not-installable

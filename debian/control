@@ -1,0 +1,49 @@
+Source: rust-openssl-sys
+Section: rust
+Priority: optional
+Build-Depends: debhelper-compat (= 13),
+ dh-sequence-cargo
+Build-Depends-Arch: cargo:native <!nocheck>,
+ rustc:native (>= 1.63.0) <!nocheck>,
+ libstd-rust-dev <!nocheck>,
+ librust-cc-1+default-dev (>= 1.0.61-~~) <!nocheck>,
+ librust-libc-0.2+default-dev <!nocheck>,
+ librust-pkg-config-0.3+default-dev (>= 0.3.9-~~) <!nocheck>,
+ librust-vcpkg-0.2+default-dev (>= 0.2.8-~~) <!nocheck>,
+ libssl-dev <!nocheck>
+Maintainer: Debian Rust Maintainers <pkg-rust-maintainers@alioth-lists.debian.net>
+Uploaders:
+ nicoo <nicoo@debian.org>
+Standards-Version: 4.7.0
+Vcs-Git: https://salsa.debian.org/rust-team/debcargo-conf.git [src/openssl-sys]
+Vcs-Browser: https://salsa.debian.org/rust-team/debcargo-conf/tree/master/src/openssl-sys
+Homepage: https://github.com/sfackler/rust-openssl
+X-Cargo-Crate: openssl-sys
+Rules-Requires-Root: no
+
+Package: librust-openssl-sys-dev
+Architecture: any
+Multi-Arch: same
+Depends:
+ ${misc:Depends},
+ librust-bindgen-0+default-dev (>= 0.69-~~),
+ librust-bindgen-0+experimental-dev (>= 0.69-~~),
+ librust-cc-1+default-dev (>= 1.0.61-~~),
+ librust-libc-0.2+default-dev,
+ librust-pkg-config-0.3+default-dev (>= 0.3.9-~~),
+ librust-vcpkg-0.2+default-dev (>= 0.2.8-~~),
+ libssl-dev
+Provides:
+ librust-openssl-sys+bindgen-dev (= ${binary:Version}),
+ librust-openssl-sys+default-dev (= ${binary:Version}),
+ librust-openssl-sys-0-dev (= ${binary:Version}),
+ librust-openssl-sys-0+bindgen-dev (= ${binary:Version}),
+ librust-openssl-sys-0+default-dev (= ${binary:Version}),
+ librust-openssl-sys-0.9-dev (= ${binary:Version}),
+ librust-openssl-sys-0.9+bindgen-dev (= ${binary:Version}),
+ librust-openssl-sys-0.9+default-dev (= ${binary:Version}),
+ librust-openssl-sys-0.9.107-dev (= ${binary:Version}),
+ librust-openssl-sys-0.9.107+bindgen-dev (= ${binary:Version}),
+ librust-openssl-sys-0.9.107+default-dev (= ${binary:Version})
+Description: FFI bindings to OpenSSL - Rust source code
+ Source code for Debianized Rust crate "openssl-sys"
