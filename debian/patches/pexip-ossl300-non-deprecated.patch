@@ -1,0 +1,2078 @@
+diff --git a/build/cfgs.rs b/build/cfgs.rs
+index ca9970740..edfa67333 100644
+--- a/build/cfgs.rs
++++ b/build/cfgs.rs
+@@ -71,9 +71,15 @@ pub fn get(openssl_version: Option<u64>, libressl_version: Option<u64>) -> Vec<&
+         if libressl_version >= 0x4_01_00_00_0 {
+             cfgs.push("libressl410");
+         }
++        if libressl_version >= 0x4_02_00_00_0 {
++            cfgs.push("libressl420");
++        }
+     } else {
+         let openssl_version = openssl_version.unwrap();
+ 
++        if openssl_version >= 0x3_05_00_00_0 {
++            cfgs.push("ossl350");
++        }
+         if openssl_version >= 0x3_04_00_00_0 {
+             cfgs.push("ossl340");
+         }
+diff --git a/build/expando.c b/build/expando.c
+index cebed1b70..038051639 100644
+--- a/build/expando.c
++++ b/build/expando.c
+@@ -111,6 +111,10 @@ RUST_CONF_OPENSSL_NO_SHA
+ RUST_CONF_OPENSSL_NO_SRP
+ #endif
+ 
++#ifdef OPENSSL_NO_SRTP
++RUST_CONF_OPENSSL_NO_SRTP
++#endif
++
+ #ifdef OPENSSL_NO_SSL3_METHOD
+ RUST_CONF_OPENSSL_NO_SSL3_METHOD
+ #endif
+diff --git a/build/find_normal.rs b/build/find_normal.rs
+index 1439e9ab3..a15ad3421 100644
+--- a/build/find_normal.rs
++++ b/build/find_normal.rs
+@@ -38,7 +38,7 @@ fn resolve_with_wellknown_homebrew_location(dir: &str) -> Option<PathBuf> {
+     // for quick resolution if possible.
+     //  `pkg-config` on brew doesn't necessarily contain settings for openssl apparently.
+     for version in &versions {
+-        let homebrew = Path::new(dir).join(format!("opt/{}", version));
++        let homebrew = Path::new(dir).join(format!("opt/{version}"));
+         if homebrew.exists() {
+             return Some(homebrew);
+         }
+@@ -92,8 +92,11 @@ fn find_openssl_dir(target: &str) -> OsString {
+     try_pkg_config();
+     try_vcpkg();
+ 
+-    // FreeBSD and OpenBSD ship with Libre|OpenSSL but don't include a pkg-config file
+-    if host == target && (target.contains("freebsd") || target.contains("openbsd")) {
++    // FreeBSD, OpenBSD, and AIX ship with Libre|OpenSSL
++    // TODO: see of this is still needed for OpenBSD
++    if host == target
++        && (target.contains("freebsd") || target.contains("openbsd") || target.contains("aix"))
++    {
+         return OsString::from("/usr");
+     }
+ 
+@@ -196,7 +199,7 @@ https://github.com/sfackler/rust-openssl#windows
+         );
+     }
+ 
+-    eprintln!("{}", msg);
++    eprintln!("{msg}");
+     std::process::exit(101); // same as panic previously
+ }
+ 
+@@ -222,7 +225,7 @@ fn try_pkg_config() {
+     {
+         Ok(lib) => lib,
+         Err(e) => {
+-            println!("\n\nCould not find openssl via pkg-config:\n{}\n", e);
++            println!("\n\nCould not find openssl via pkg-config:\n{e}\n");
+             return;
+         }
+     };
+@@ -255,7 +258,7 @@ fn try_vcpkg() {
+     {
+         Ok(lib) => lib,
+         Err(e) => {
+-            println!("note: vcpkg did not find openssl: {}", e);
++            println!("note: vcpkg did not find openssl: {e}");
+             return;
+         }
+     };
+@@ -265,6 +268,7 @@ fn try_vcpkg() {
+     println!("cargo:rustc-link-lib=user32");
+     println!("cargo:rustc-link-lib=gdi32");
+     println!("cargo:rustc-link-lib=crypt32");
++    println!("cargo:rustc-link-lib=advapi32");
+ 
+     process::exit(0);
+ }
+diff --git a/build/main.rs b/build/main.rs
+index c4ac240e3..2ed5eb8d3 100644
+--- a/build/main.rs
++++ b/build/main.rs
+@@ -27,11 +27,11 @@ enum Version {
+ 
+ fn env_inner(name: &str) -> Option<OsString> {
+     let var = env::var_os(name);
+-    println!("cargo:rerun-if-env-changed={}", name);
++    println!("cargo:rerun-if-env-changed={name}");
+ 
+     match var {
+         Some(ref v) => println!("{} = {}", name, v.to_string_lossy()),
+-        None => println!("{} unset", name),
++        None => println!("{name} unset"),
+     }
+ 
+     var
+@@ -39,7 +39,7 @@ fn env_inner(name: &str) -> Option<OsString> {
+ 
+ fn env(name: &str) -> Option<OsString> {
+     let prefix = env::var("TARGET").unwrap().to_uppercase().replace('-', "_");
+-    let prefixed = format!("{}_{}", prefix, name);
++    let prefixed = format!("{prefix}_{name}");
+     env_inner(&prefixed).or_else(|| env_inner(name))
+ }
+ 
+@@ -54,9 +54,9 @@ fn check_ssl_kind() {
+ 
+         if let Ok(vars) = env::var("DEP_BSSL_CONF") {
+             for var in vars.split(',') {
+-                println!("cargo:rustc-cfg=osslconf=\"{}\"", var);
++                println!("cargo:rustc-cfg=osslconf=\"{var}\"");
+             }
+-            println!("cargo:conf={}", vars);
++            println!("cargo:conf={vars}");
+         }
+ 
+         // BoringSSL does not have any build logic, exit early
+@@ -64,11 +64,9 @@ fn check_ssl_kind() {
+     }
+ 
+     let is_aws_lc = cfg!(feature = "aws-lc");
++    let is_aws_lc_fips = cfg!(feature = "aws-lc-fips");
+ 
+-    if is_aws_lc {
+-        println!("cargo:rustc-cfg=awslc");
+-        println!("cargo:awslc=true");
+-
++    if is_aws_lc || is_aws_lc_fips {
+         // The aws-lc-sys crate uses a link name that embeds
+         // the version number of crate. Examples (crate-name => links name):
+         //   * aws-lc-sys => aws_lc_0_26_0
+@@ -77,11 +75,22 @@ fn check_ssl_kind() {
+         //
+         // Due to this we need to determine what version of the AWS-LC has been selected (fips or non-fips)
+         // and then need to parse out the pieces we are interested in ignoring the version componenet of the name.
+-        const AWS_LC_ENV_VAR_PREFIX: &str = "DEP_AWS_LC_";
++        let aws_lc_env_var_prefix: &'static str = if is_aws_lc_fips {
++            "DEP_AWS_LC_FIPS_"
++        } else {
++            "DEP_AWS_LC_"
++        };
++
++        println!("cargo:rustc-cfg=awslc");
++        println!("cargo:awslc=true");
++        if is_aws_lc_fips {
++            println!("cargo:rustc-cfg=awslc_fips");
++            println!("cargo:awslc_fips=true");
++        }
+ 
+         let mut version = None;
+         for (name, _) in std::env::vars() {
+-            if let Some(name) = name.strip_prefix(AWS_LC_ENV_VAR_PREFIX) {
++            if let Some(name) = name.strip_prefix(aws_lc_env_var_prefix) {
+                 if let Some(name) = name.strip_suffix("_INCLUDE") {
+                     version = Some(name.to_owned());
+                     break;
+@@ -91,7 +100,7 @@ fn check_ssl_kind() {
+         let version = version.expect("aws-lc version detected");
+ 
+         // Read the OpenSSL configuration statements and emit rust-cfg for each.
+-        if let Ok(vars) = std::env::var(format!("{AWS_LC_ENV_VAR_PREFIX}{version}_CONF")) {
++        if let Ok(vars) = std::env::var(format!("{aws_lc_env_var_prefix}{version}_CONF")) {
+             for var in vars.split(',') {
+                 println!("cargo:rustc-cfg=osslconf=\"{var}\"");
+             }
+@@ -100,7 +109,7 @@ fn check_ssl_kind() {
+ 
+         // Emit the include header directory from the aws-lc(-fips)-sys crate so that it can be used if needed
+         // by crates consuming openssl-sys.
+-        if let Ok(val) = std::env::var(format!("{AWS_LC_ENV_VAR_PREFIX}{version}_INCLUDE")) {
++        if let Ok(val) = std::env::var(format!("{aws_lc_env_var_prefix}{version}_INCLUDE")) {
+             println!("cargo:include={val}");
+         }
+ 
+@@ -110,7 +119,7 @@ fn check_ssl_kind() {
+ }
+ 
+ fn main() {
+-    println!("cargo:rustc-check-cfg=cfg(osslconf, values(\"OPENSSL_NO_OCB\", \"OPENSSL_NO_SM4\", \"OPENSSL_NO_SEED\", \"OPENSSL_NO_CHACHA\", \"OPENSSL_NO_CAST\", \"OPENSSL_NO_IDEA\", \"OPENSSL_NO_CAMELLIA\", \"OPENSSL_NO_RC4\", \"OPENSSL_NO_BF\", \"OPENSSL_NO_PSK\", \"OPENSSL_NO_DEPRECATED_3_0\", \"OPENSSL_NO_SCRYPT\", \"OPENSSL_NO_SM3\", \"OPENSSL_NO_RMD160\", \"OPENSSL_NO_EC2M\", \"OPENSSL_NO_OCSP\", \"OPENSSL_NO_CMS\", \"OPENSSL_NO_COMP\", \"OPENSSL_NO_SOCK\", \"OPENSSL_NO_STDIO\", \"OPENSSL_NO_EC\", \"OPENSSL_NO_SSL3_METHOD\", \"OPENSSL_NO_KRB5\", \"OPENSSL_NO_TLSEXT\", \"OPENSSL_NO_SRP\", \"OPENSSL_NO_RFC3779\", \"OPENSSL_NO_SHA\", \"OPENSSL_NO_NEXTPROTONEG\", \"OPENSSL_NO_ENGINE\", \"OPENSSL_NO_BUF_FREELISTS\", \"OPENSSL_NO_RC2\"))");
++    println!("cargo:rustc-check-cfg=cfg(osslconf, values(\"OPENSSL_NO_OCB\", \"OPENSSL_NO_SM4\", \"OPENSSL_NO_SEED\", \"OPENSSL_NO_CHACHA\", \"OPENSSL_NO_CAST\", \"OPENSSL_NO_IDEA\", \"OPENSSL_NO_CAMELLIA\", \"OPENSSL_NO_RC4\", \"OPENSSL_NO_BF\", \"OPENSSL_NO_PSK\", \"OPENSSL_NO_DEPRECATED_3_0\", \"OPENSSL_NO_SCRYPT\", \"OPENSSL_NO_SM3\", \"OPENSSL_NO_RMD160\", \"OPENSSL_NO_EC2M\", \"OPENSSL_NO_OCSP\", \"OPENSSL_NO_CMS\", \"OPENSSL_NO_COMP\", \"OPENSSL_NO_SOCK\", \"OPENSSL_NO_STDIO\", \"OPENSSL_NO_EC\", \"OPENSSL_NO_SSL3_METHOD\", \"OPENSSL_NO_KRB5\", \"OPENSSL_NO_TLSEXT\", \"OPENSSL_NO_SRP\", \"OPENSSL_NO_SRTP\", \"OPENSSL_NO_RFC3779\", \"OPENSSL_NO_SHA\", \"OPENSSL_NO_NEXTPROTONEG\", \"OPENSSL_NO_ENGINE\", \"OPENSSL_NO_BUF_FREELISTS\", \"OPENSSL_NO_RC2\"))");
+ 
+     println!("cargo:rustc-check-cfg=cfg(openssl)");
+     println!("cargo:rustc-check-cfg=cfg(libressl)");
+@@ -141,6 +150,7 @@ fn main() {
+     println!("cargo:rustc-check-cfg=cfg(libressl390)");
+     println!("cargo:rustc-check-cfg=cfg(libressl400)");
+     println!("cargo:rustc-check-cfg=cfg(libressl410)");
++    println!("cargo:rustc-check-cfg=cfg(libressl420)");
+ 
+     println!("cargo:rustc-check-cfg=cfg(ossl101)");
+     println!("cargo:rustc-check-cfg=cfg(ossl102)");
+@@ -171,12 +181,12 @@ fn main() {
+     let potential_path = include_dir.join("openssl");
+     if potential_path.exists() && !cfg!(feature = "vendored") {
+         if let Some(printable_include) = potential_path.to_str() {
+-            println!("cargo:rerun-if-changed={}", printable_include);
++            println!("cargo:rerun-if-changed={printable_include}");
+         }
+     }
+ 
+     if !lib_dirs.iter().all(|p| p.exists()) {
+-        panic!("OpenSSL library directory does not exist: {:?}", lib_dirs);
++        panic!("OpenSSL library directory does not exist: {lib_dirs:?}");
+     }
+     if !include_dir.exists() {
+         panic!(
+@@ -215,7 +225,7 @@ fn main() {
+ 
+     let kind = determine_mode(&lib_dirs, &libs);
+     for lib in libs.into_iter() {
+-        println!("cargo:rustc-link-lib={}={}", kind, lib);
++        println!("cargo:rustc-link-lib={kind}={lib}");
+     }
+ 
+     // libssl in BoringSSL requires the C++ runtime, and static libraries do
+@@ -246,7 +256,7 @@ fn main() {
+             "macos" => "c++",
+             _ => "stdc++",
+         };
+-        println!("cargo:rustc-link-lib={}", cpp_lib);
++        println!("cargo:rustc-link-lib={cpp_lib}");
+     }
+ 
+     // https://github.com/openssl/openssl/pull/15086
+@@ -305,7 +315,7 @@ fn validate_headers(include_dirs: &[PathBuf]) -> Version {
+             panic!(
+                 "
+ Header expansion error:
+-{:?}
++{e:?}
+ 
+ Failed to find OpenSSL development headers.
+ 
+@@ -325,8 +335,7 @@ specific to your distribution:
+ See rust-openssl documentation for more information:
+ 
+     https://docs.rs/openssl
+-",
+-                e
++"
+             );
+         }
+     };
+@@ -367,7 +376,7 @@ See rust-openssl documentation for more information:
+     }
+ 
+     for enabled in &enabled {
+-        println!("cargo:rustc-cfg=osslconf=\"{}\"", enabled);
++        println!("cargo:rustc-cfg=osslconf=\"{enabled}\"");
+     }
+     println!("cargo:conf={}", enabled.join(","));
+ 
+@@ -389,11 +398,11 @@ See rust-openssl documentation for more information:
+     println!("cargo:rustc-cfg=openssl");
+ 
+     for cfg in cfgs::get(openssl_version, libressl_version) {
+-        println!("cargo:rustc-cfg={}", cfg);
++        println!("cargo:rustc-cfg={cfg}");
+     }
+ 
+     if let Some(libressl_version) = libressl_version {
+-        println!("cargo:libressl_version_number={:x}", libressl_version);
++        println!("cargo:libressl_version_number={libressl_version:x}");
+ 
+         let major = (libressl_version >> 28) as u8;
+         let minor = (libressl_version >> 20) as u8;
+@@ -439,16 +448,18 @@ See rust-openssl documentation for more information:
+             (3, 9, _) => ('3', '9', 'x'),
+             (4, 0, 0) => ('4', '0', '0'),
+             (4, 0, _) => ('4', '0', 'x'),
++            (4, 1, 0) => ('4', '1', '0'),
++            (4, 1, _) => ('4', '1', 'x'),
+             _ => version_error(),
+         };
+ 
+         println!("cargo:libressl=true");
+-        println!("cargo:libressl_version={}{}{}", major, minor, fix);
++        println!("cargo:libressl_version={major}{minor}{fix}");
+         println!("cargo:version=101");
+         Version::Libressl
+     } else {
+         let openssl_version = openssl_version.unwrap();
+-        println!("cargo:version_number={:x}", openssl_version);
++        println!("cargo:version_number={openssl_version:x}");
+ 
+         if openssl_version >= 0x4_00_00_00_0 {
+             version_error()
+@@ -481,7 +492,7 @@ fn version_error() -> ! {
+         "
+ 
+ This crate is only compatible with OpenSSL (version 1.0.1 through 1.1.1, or 3), or LibreSSL 2.5
+-through 4.0.x, but a different version of OpenSSL was found. The build is now aborting
++through 4.1.x, but a different version of OpenSSL was found. The build is now aborting
+ due to this version mismatch.
+ 
+ "
+@@ -502,7 +513,7 @@ fn parse_version(version: &str) -> u64 {
+ 
+ // parses a string that looks like 3_0_0
+ fn parse_new_version(version: &str) -> u64 {
+-    println!("version: {}", version);
++    println!("version: {version}");
+     let mut it = version.split('_');
+     let major = it.next().unwrap().parse::<u64>().unwrap();
+     let minor = it.next().unwrap().parse::<u64>().unwrap();
+@@ -539,20 +550,19 @@ fn determine_mode(libdirs: &[PathBuf], libs: &[&str]) -> &'static str {
+     }
+     let can_static = libs
+         .iter()
+-        .all(|l| files.contains(&format!("lib{}.a", l)) || files.contains(&format!("{}.lib", l)));
++        .all(|l| files.contains(&format!("lib{l}.a")) || files.contains(&format!("{l}.lib")));
+     let can_dylib = libs.iter().all(|l| {
+-        files.contains(&format!("lib{}.so", l))
+-            || files.contains(&format!("{}.dll", l))
+-            || files.contains(&format!("lib{}.dylib", l))
++        files.contains(&format!("lib{l}.so"))
++            || files.contains(&format!("{l}.dll"))
++            || files.contains(&format!("lib{l}.dylib"))
+     });
+     match (can_static, can_dylib) {
+         (true, false) => return "static",
+         (false, true) => return "dylib",
+         (false, false) => {
+             panic!(
+-                "OpenSSL libdir at `{:?}` does not contain the required files \
+-                 to either statically or dynamically link OpenSSL",
+-                libdirs
++                "OpenSSL libdir at `{libdirs:?}` does not contain the required files \
++                 to either statically or dynamically link OpenSSL"
+             );
+         }
+         (true, true) => {}
+diff --git a/build/run_bindgen.rs b/build/run_bindgen.rs
+index cc0efd8b5..3a8f5dea5 100644
+--- a/build/run_bindgen.rs
++++ b/build/run_bindgen.rs
+@@ -1,5 +1,5 @@
+ #[cfg(feature = "bindgen")]
+-use bindgen::callbacks::{MacroParsingBehavior, ParseCallbacks};
++use bindgen::callbacks::{ItemInfo, MacroParsingBehavior, ParseCallbacks};
+ #[cfg(feature = "bindgen")]
+ use bindgen::{MacroTypeVariation, RustTarget};
+ use std::io::Write;
+@@ -45,7 +45,7 @@ const INCLUDES: &str = "
+ #include <openssl/cms.h>
+ #endif
+ 
+-#if !(defined(OPENSSL_IS_BORINGSSL) || defined(OPENSSL_IS_AWSLC))
++#if !defined(OPENSSL_NO_COMP) && !(defined(OPENSSL_IS_BORINGSSL) || defined(OPENSSL_IS_AWSLC))
+ #include <openssl/comp.h>
+ #endif
+ 
+@@ -58,7 +58,11 @@ const INCLUDES: &str = "
+ #endif
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x30000000
++#include <openssl/decoder.h>
++#include <openssl/encoder.h>
+ #include <openssl/provider.h>
++#include <openssl/params.h>
++#include <openssl/param_build.h>
+ #endif
+ 
+ #if OPENSSL_VERSION_NUMBER >= 0x30200000
+@@ -80,7 +84,7 @@ pub fn run(include_dirs: &[PathBuf]) {
+ 
+     let mut builder = bindgen::builder()
+         .parse_callbacks(Box::new(OpensslCallbacks))
+-        .rust_target(RustTarget::Stable_1_47)
++        .rust_target(RustTarget::stable(70, 0).unwrap())
+         .ctypes_prefix("::libc")
+         .raw_line("use libc::*;")
+         .raw_line("#[cfg(windows)] use std::os::windows::raw::HANDLE;")
+@@ -134,7 +138,7 @@ pub fn run_boringssl(include_dirs: &[PathBuf]) {
+         .expect("Failed to write contents to boring_static_wrapper.h");
+ 
+     let mut builder = bindgen::builder()
+-        .rust_target(RustTarget::Stable_1_47)
++        .rust_target(RustTarget::stable(70, 0).unwrap())
+         .ctypes_prefix("::libc")
+         .raw_line("use libc::*;")
+         .derive_default(false)
+@@ -186,9 +190,7 @@ pub fn run_boringssl(include_dirs: &[PathBuf]) {
+     bindgen_cmd
+         .arg("-o")
+         .arg(out_dir.join("bindgen.rs"))
+-        // Must be a valid version from
+-        // https://docs.rs/bindgen/latest/bindgen/enum.RustTarget.html
+-        .arg("--rust-target=1.47")
++        .arg("--rust-target=1.70")
+         .arg("--ctypes-prefix=::libc")
+         .arg("--raw-line=use libc::*;")
+         .arg("--no-derive-default")
+@@ -257,7 +259,7 @@ pub fn run_awslc(include_dirs: &[PathBuf], symbol_prefix: Option<String>) {
+         .expect("Failed to write contents to awslc_static_wrapper.h");
+ 
+     let mut builder = bindgen::builder()
+-        .rust_target(RustTarget::Stable_1_47)
++        .rust_target(RustTarget::stable(70, 0).unwrap())
+         .ctypes_prefix("::libc")
+         .raw_line("use libc::*;")
+         .derive_default(false)
+@@ -312,9 +314,7 @@ pub fn run_awslc(include_dirs: &[PathBuf], symbol_prefix: Option<String>) {
+     bindgen_cmd
+         .arg("-o")
+         .arg(out_dir.join("bindgen.rs"))
+-        // Must be a valid version from
+-        // https://docs.rs/bindgen/latest/bindgen/enum.RustTarget.html
+-        .arg("--rust-target=1.47")
++        .arg("--rust-target=1.70")
+         .arg("--ctypes-prefix=::libc")
+         .arg("--raw-line=use libc::*;")
+         .arg("--no-derive-default")
+@@ -354,8 +354,8 @@ impl ParseCallbacks for OpensslCallbacks {
+         MacroParsingBehavior::Ignore
+     }
+ 
+-    fn item_name(&self, original_item_name: &str) -> Option<String> {
+-        match original_item_name {
++    fn item_name(&self, item_info: ItemInfo) -> Option<String> {
++        match item_info.name {
+             // Our original definitions of these are wrong, so rename to avoid breakage
+             "CRYPTO_EX_new"
+             | "CRYPTO_EX_dup"
+@@ -373,7 +373,9 @@ impl ParseCallbacks for OpensslCallbacks {
+             | "SSL_CTX_set_tmp_ecdh_callback"
+             | "SSL_set_tmp_ecdh_callback"
+             | "SSL_CTX_callback_ctrl"
+-            | "SSL_CTX_set_alpn_select_cb" => Some(format!("{}__fixed_rust", original_item_name)),
++            | "SSL_CTX_set_alpn_select_cb" => Some(format!("{}__fixed_rust", item_info.name)),
++            // On NetBSD, "off_t" is generated as "__off_t".
++            "__off_t" => Some("off_t".to_string()),
+             _ => None,
+         }
+     }
+diff --git a/src/aes.rs b/src/aes.rs
+index ade6e842f..7fcb838ce 100644
+--- a/src/aes.rs
++++ b/src/aes.rs
+@@ -1,7 +1,10 @@
+ use libc::*;
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub const AES_ENCRYPT: c_int = 1;
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub const AES_DECRYPT: c_int = 0;
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub const AES_MAXNR: c_int = 14;
+ pub const AES_BLOCK_SIZE: c_int = 16;
+diff --git a/src/core_dispatch.rs b/src/core_dispatch.rs
+new file mode 100644
+index 000000000..446dfc96e
+--- /dev/null
++++ b/src/core_dispatch.rs
+@@ -0,0 +1,11 @@
++use super::*;
++use libc::*;
++
++/* OpenSSL 3.* only */
++
++pub const OSSL_KEYMGMT_SELECT_PRIVATE_KEY: c_int = 0x01;
++pub const OSSL_KEYMGMT_SELECT_PUBLIC_KEY: c_int = 0x02;
++pub const OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS: c_int = 0x04;
++pub const OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS: c_int = 0x80;
++pub const OSSL_KEYMGMT_SELECT_ALL_PARAMETERS: c_int =
++    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
+diff --git a/src/crypto.rs b/src/crypto.rs
+index 7eff6a847..6cfd7818d 100644
+--- a/src/crypto.rs
++++ b/src/crypto.rs
+@@ -131,4 +131,5 @@ cfg_if! {
+     }
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub const CRYPTO_LOCK: c_int = 1;
+diff --git a/src/dh.rs b/src/dh.rs
+new file mode 100644
+index 000000000..05ae66ba1
+--- /dev/null
++++ b/src/dh.rs
+@@ -0,0 +1,32 @@
++use libc::*;
++use std::ptr;
++
++use super::super::*;
++
++cfg_if! {
++    if #[cfg(not(ossl300))] {
++        pub unsafe fn EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx: *mut EVP_PKEY_CTX, len: c_int) -> c_int {
++            EVP_PKEY_CTX_ctrl(
++                ctx,
++                EVP_PKEY_DH,
++                EVP_PKEY_OP_PARAMGEN,
++                EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN,
++                len,
++                ptr::null_mut(),
++            )
++        }
++        pub unsafe fn EVP_PKEY_CTX_set_dh_paramgen_generator(ctx: *mut EVP_PKEY_CTX, gen: c_int) -> c_int {
++            EVP_PKEY_CTX_ctrl(
++                ctx,
++                EVP_PKEY_DH,
++                EVP_PKEY_OP_PARAMGEN,
++                EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR,
++                gen,
++                ptr::null_mut(),
++            )
++        }
++    }
++}
++
++pub const EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN: c_int = EVP_PKEY_ALG_CTRL + 1;
++pub const EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR: c_int = EVP_PKEY_ALG_CTRL + 2;
+diff --git a/src/dsa.rs b/src/dsa.rs
+new file mode 100644
+index 000000000..cd5abfec8
+--- /dev/null
++++ b/src/dsa.rs
+@@ -0,0 +1,21 @@
++use libc::*;
++use std::ptr;
++
++use super::super::*;
++
++cfg_if! {
++    if #[cfg(not(ossl300))] {
++        pub unsafe fn EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx: *mut EVP_PKEY_CTX, nbits: c_int) -> c_int {
++            EVP_PKEY_CTX_ctrl(
++                ctx,
++                EVP_PKEY_DSA,
++                EVP_PKEY_OP_PARAMGEN,
++                EVP_PKEY_CTRL_DSA_PARAMGEN_BITS,
++                nbits,
++                ptr::null_mut(),
++            )
++        }
++
++        pub const EVP_PKEY_CTRL_DSA_PARAMGEN_BITS: c_int = EVP_PKEY_ALG_CTRL + 1;
++    }
++}
+diff --git a/src/ec.rs b/src/ec.rs
+index 995a84ff6..61fa0b134 100644
+--- a/src/ec.rs
++++ b/src/ec.rs
+@@ -5,6 +5,20 @@ use super::*;
+ 
+ pub const OPENSSL_EC_NAMED_CURVE: c_int = 1;
+ 
++cfg_if! {
++    if #[cfg(not(ossl300))] {
++        pub unsafe fn EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx: *mut EVP_PKEY_CTX, nid: c_int) -> c_int {
++            EVP_PKEY_CTX_ctrl(
++                ctx,
++                EVP_PKEY_EC,
++                EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN,
++                EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID,
++                nid,
++                ptr::null_mut(),
++            )
++        }
++    }
++}
+ #[cfg(ossl300)]
+ pub unsafe fn EVP_EC_gen(curve: *const c_char) -> *mut EVP_PKEY {
+     EVP_PKEY_Q_keygen(
+@@ -14,3 +28,5 @@ pub unsafe fn EVP_EC_gen(curve: *const c_char) -> *mut EVP_PKEY {
+         curve,
+     )
+ }
++
++pub const EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID: c_int = EVP_PKEY_ALG_CTRL + 1;
+diff --git a/src/evp.rs b/src/evp.rs
+index 5fad4b977..4d3fb5768 100644
+--- a/src/evp.rs
++++ b/src/evp.rs
+@@ -38,6 +38,15 @@ pub const EVP_CTRL_GCM_SET_IVLEN: c_int = 0x9;
+ pub const EVP_CTRL_GCM_GET_TAG: c_int = 0x10;
+ pub const EVP_CTRL_GCM_SET_TAG: c_int = 0x11;
+ 
++cfg_if! {
++    if #[cfg(ossl300)] {
++        pub const EVP_PKEY_KEY_PARAMETERS: c_int = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
++        pub const EVP_PKEY_PRIVATE_KEY: c_int = EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
++        pub const EVP_PKEY_PUBLIC_KEY: c_int = EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
++        pub const EVP_PKEY_KEYPAIR: c_int = EVP_PKEY_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
++    }
++}
++
+ pub unsafe fn EVP_get_digestbynid(type_: c_int) -> *const EVP_MD {
+     EVP_get_digestbyname(OBJ_nid2sn(type_))
+ }
+@@ -162,6 +171,7 @@ cfg_if! {
+     }
+ }
+ 
++pub const EVP_PKEY_OP_PARAMGEN: c_int = 1 << 1;
+ pub const EVP_PKEY_OP_KEYGEN: c_int = 1 << 2;
+ cfg_if! {
+     if #[cfg(ossl300)] {
+@@ -325,18 +335,22 @@ pub unsafe fn EVP_PKEY_CTX_set_signature_md(cxt: *mut EVP_PKEY_CTX, md: *mut EVP
+     )
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn EVP_PKEY_assign_RSA(pkey: *mut EVP_PKEY, rsa: *mut RSA) -> c_int {
+     EVP_PKEY_assign(pkey, EVP_PKEY_RSA, rsa as *mut c_void)
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn EVP_PKEY_assign_DSA(pkey: *mut EVP_PKEY, dsa: *mut DSA) -> c_int {
+     EVP_PKEY_assign(pkey, EVP_PKEY_DSA, dsa as *mut c_void)
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn EVP_PKEY_assign_DH(pkey: *mut EVP_PKEY, dh: *mut DH) -> c_int {
+     EVP_PKEY_assign(pkey, EVP_PKEY_DH, dh as *mut c_void)
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn EVP_PKEY_assign_EC_KEY(pkey: *mut EVP_PKEY, ec_key: *mut EC_KEY) -> c_int {
+     EVP_PKEY_assign(pkey, EVP_PKEY_EC, ec_key as *mut c_void)
+ }
+diff --git a/src/handwritten/aes.rs b/src/handwritten/aes.rs
+index ba249362c..fea137bb3 100644
+--- a/src/handwritten/aes.rs
++++ b/src/handwritten/aes.rs
+@@ -1,6 +1,7 @@
+ use super::super::*;
+ use libc::*;
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ #[repr(C)]
+ pub struct AES_KEY {
+     // There is some business with AES_LONG which is there to ensure the values here are 32 bits
+@@ -8,6 +9,7 @@ pub struct AES_KEY {
+     rounds: c_int,
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     pub fn AES_set_encrypt_key(userKey: *const c_uchar, bits: c_int, key: *mut AES_KEY) -> c_int;
+     pub fn AES_set_decrypt_key(userKey: *const c_uchar, bits: c_int, key: *mut AES_KEY) -> c_int;
+diff --git a/src/handwritten/cmac.rs b/src/handwritten/cmac.rs
+index e44094d21..10a23260f 100644
+--- a/src/handwritten/cmac.rs
++++ b/src/handwritten/cmac.rs
+@@ -2,6 +2,7 @@ use libc::*;
+ 
+ use super::super::*;
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     pub fn CMAC_CTX_new() -> *mut CMAC_CTX;
+     pub fn CMAC_CTX_free(ctx: *mut CMAC_CTX);
+diff --git a/src/handwritten/decoder.rs b/src/handwritten/decoder.rs
+new file mode 100644
+index 000000000..4b684d37d
+--- /dev/null
++++ b/src/handwritten/decoder.rs
+@@ -0,0 +1,52 @@
++use super::super::*;
++use libc::*;
++
++extern "C" {
++    pub fn OSSL_DECODER_CTX_new() -> *mut OSSL_DECODER_CTX;
++    pub fn OSSL_DECODER_CTX_free(ctx: *mut OSSL_DECODER_CTX);
++
++    pub fn OSSL_DECODER_CTX_new_for_pkey(
++        pkey: *mut *mut EVP_PKEY,
++        input_type: *const c_char,
++        input_struct: *const c_char,
++        keytype: *const c_char,
++        selection: c_int,
++        libctx: *mut OSSL_LIB_CTX,
++        propquery: *const c_char,
++    ) -> *mut OSSL_DECODER_CTX;
++
++    pub fn OSSL_DECODER_CTX_set_selection(ctx: *mut OSSL_DECODER_CTX, selection: c_int) -> c_int;
++    pub fn OSSL_DECODER_CTX_set_input_type(
++        ctx: *mut OSSL_DECODER_CTX,
++        input_type: *const c_char,
++    ) -> c_int;
++    pub fn OSSL_DECODER_CTX_set_input_structure(
++        ctx: *mut OSSL_DECODER_CTX,
++        input_structure: *const c_char,
++    ) -> c_int;
++
++    pub fn OSSL_DECODER_CTX_set_passphrase(
++        ctx: *mut OSSL_DECODER_CTX,
++        kstr: *const c_uchar,
++        klen: size_t,
++    ) -> c_int;
++    pub fn OSSL_DECODER_CTX_set_pem_password_cb(
++        ctx: *mut OSSL_DECODER_CTX,
++        cb: pem_password_cb,
++        cbarg: *mut c_void,
++    ) -> c_int;
++    pub fn OSSL_DECODER_CTX_set_passphrase_cb(
++        ctx: *mut OSSL_DECODER_CTX,
++        cb: OSSL_PASSPHRASE_CALLBACK,
++        cbarg: *mut c_void,
++    ) -> c_int;
++
++    pub fn OSSL_DECODER_from_bio(ctx: *mut OSSL_DECODER_CTX, b_in: *mut BIO) -> c_int;
++    #[cfg(not(osslconf = "OPENSSL_NO_STDIO"))]
++    pub fn OSSL_DECODER_from_fp(ctx: *mut OSSL_DECODER_CTX, fp: *mut FILE) -> c_int;
++    pub fn OSSL_DECODER_from_data(
++        ctx: *mut OSSL_DECODER_CTX,
++        pdata: *mut *const c_uchar,
++        pdata_len: *mut size_t,
++    ) -> c_int;
++}
+diff --git a/src/handwritten/dh.rs b/src/handwritten/dh.rs
+index c4671c969..38098876e 100644
+--- a/src/handwritten/dh.rs
++++ b/src/handwritten/dh.rs
+@@ -1,5 +1,12 @@
+ use super::super::*;
+ 
++#[cfg(ossl300)]
++extern "C" {
++    pub fn EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx: *mut EVP_PKEY_CTX, len: c_int) -> c_int;
++    pub fn EVP_PKEY_CTX_set_dh_paramgen_generator(ctx: *mut EVP_PKEY_CTX, gen: c_int) -> c_int;
++}
++
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     pub fn DH_new() -> *mut DH;
+     pub fn DH_free(dh: *mut DH);
+diff --git a/src/handwritten/dsa.rs b/src/handwritten/dsa.rs
+index be25f23b6..a6ceb0461 100644
+--- a/src/handwritten/dsa.rs
++++ b/src/handwritten/dsa.rs
+@@ -2,6 +2,11 @@ use libc::*;
+ 
+ use super::super::*;
+ 
++#[cfg(ossl300)]
++extern "C" {
++    pub fn EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx: *mut EVP_PKEY_CTX, nbits: c_int) -> c_int;
++}
++
+ cfg_if! {
+     if #[cfg(any(ossl110, libressl280))] {
+         pub enum DSA_SIG {}
+@@ -14,6 +19,7 @@ cfg_if! {
+     }
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     pub fn DSA_new() -> *mut DSA;
+     pub fn DSA_free(dsa: *mut DSA);
+@@ -67,6 +73,9 @@ extern "C" {
+     pub fn DSA_get0_key(d: *const DSA, pub_key: *mut *const BIGNUM, priv_key: *mut *const BIGNUM);
+     #[cfg(any(ossl110, libressl273))]
+     pub fn DSA_set0_key(d: *mut DSA, pub_key: *mut BIGNUM, priv_key: *mut BIGNUM) -> c_int;
++}
++
++extern "C" {
+     pub fn d2i_DSA_SIG(
+         sig: *mut *mut DSA_SIG,
+         pp: *mut *const c_uchar,
+diff --git a/src/handwritten/ec.rs b/src/handwritten/ec.rs
+index 849251000..6f717932b 100644
+--- a/src/handwritten/ec.rs
++++ b/src/handwritten/ec.rs
+@@ -1,6 +1,11 @@
+ use super::super::*;
+ use libc::*;
+ 
++#[cfg(ossl300)]
++extern "C" {
++    pub fn EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx: *mut EVP_PKEY_CTX, nid: c_int) -> c_int;
++}
++
+ #[repr(C)]
+ #[derive(Copy, Clone)]
+ pub enum point_conversion_form_t {
+@@ -9,18 +14,17 @@ pub enum point_conversion_form_t {
+     POINT_CONVERSION_HYBRID = 6,
+ }
+ 
+-#[cfg(not(libressl410))]
++#[cfg(not(any(libressl410, osslconf = "OPENSSL_NO_DEPRECATED_3_0")))]
+ pub enum EC_METHOD {}
+ pub enum EC_GROUP {}
+ pub enum EC_POINT {}
+ 
+ extern "C" {
+-    #[cfg(not(osslconf = "OPENSSL_NO_EC2M"))]
+-    pub fn EC_GF2m_simple_method() -> *const EC_METHOD;
+-
+-    #[cfg(not(libressl410))]
++    #[cfg(not(any(libressl410, osslconf = "OPENSSL_NO_DEPRECATED_3_0")))]
+     pub fn EC_GROUP_new(meth: *const EC_METHOD) -> *mut EC_GROUP;
+ 
++    pub fn EC_GROUP_dup(group: *const EC_GROUP) -> *mut EC_GROUP;
++
+     pub fn EC_GROUP_free(group: *mut EC_GROUP);
+ 
+     pub fn EC_GROUP_get_order(
+@@ -50,23 +54,6 @@ extern "C" {
+ 
+     pub fn EC_GROUP_get_asn1_flag(group: *const EC_GROUP) -> c_int;
+ 
+-    pub fn EC_GROUP_get_curve_GFp(
+-        group: *const EC_GROUP,
+-        p: *mut BIGNUM,
+-        a: *mut BIGNUM,
+-        b: *mut BIGNUM,
+-        ctx: *mut BN_CTX,
+-    ) -> c_int;
+-
+-    #[cfg(not(osslconf = "OPENSSL_NO_EC2M"))]
+-    pub fn EC_GROUP_get_curve_GF2m(
+-        group: *const EC_GROUP,
+-        p: *mut BIGNUM,
+-        a: *mut BIGNUM,
+-        b: *mut BIGNUM,
+-        ctx: *mut BN_CTX,
+-    ) -> c_int;
+-
+     pub fn EC_GROUP_get_degree(group: *const EC_GROUP) -> c_int;
+ 
+     #[cfg(ossl110)]
+@@ -111,16 +98,8 @@ extern "C" {
+         y: *mut BIGNUM,
+         ctx: *mut BN_CTX,
+     ) -> c_int;
+-
+-    pub fn EC_POINT_get_affine_coordinates_GFp(
+-        group: *const EC_GROUP,
+-        p: *const EC_POINT,
+-        x: *mut BIGNUM,
+-        y: *mut BIGNUM,
+-        ctx: *mut BN_CTX,
+-    ) -> c_int;
+-
+-    pub fn EC_POINT_set_affine_coordinates_GFp(
++    #[cfg(any(ossl111, boringssl, libressl350, awslc))]
++    pub fn EC_POINT_set_affine_coordinates(
+         group: *const EC_GROUP,
+         p: *mut EC_POINT,
+         x: *const BIGNUM,
+@@ -128,15 +107,6 @@ extern "C" {
+         ctx: *mut BN_CTX,
+     ) -> c_int;
+ 
+-    #[cfg(not(osslconf = "OPENSSL_NO_EC2M"))]
+-    pub fn EC_POINT_get_affine_coordinates_GF2m(
+-        group: *const EC_GROUP,
+-        p: *const EC_POINT,
+-        x: *mut BIGNUM,
+-        y: *mut BIGNUM,
+-        ctx: *mut BN_CTX,
+-    ) -> c_int;
+-
+     pub fn EC_POINT_point2oct(
+         group: *const EC_GROUP,
+         p: *const EC_POINT,
+@@ -193,6 +163,54 @@ extern "C" {
+         m: *const BIGNUM,
+         ctx: *mut BN_CTX,
+     ) -> c_int;
++}
++
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
++extern "C" {
++    #[cfg(not(osslconf = "OPENSSL_NO_EC2M"))]
++    pub fn EC_GF2m_simple_method() -> *const EC_METHOD;
++
++    pub fn EC_GROUP_get_curve_GFp(
++        group: *const EC_GROUP,
++        p: *mut BIGNUM,
++        a: *mut BIGNUM,
++        b: *mut BIGNUM,
++        ctx: *mut BN_CTX,
++    ) -> c_int;
++
++    #[cfg(not(osslconf = "OPENSSL_NO_EC2M"))]
++    pub fn EC_GROUP_get_curve_GF2m(
++        group: *const EC_GROUP,
++        p: *mut BIGNUM,
++        a: *mut BIGNUM,
++        b: *mut BIGNUM,
++        ctx: *mut BN_CTX,
++    ) -> c_int;
++
++    pub fn EC_POINT_get_affine_coordinates_GFp(
++        group: *const EC_GROUP,
++        p: *const EC_POINT,
++        x: *mut BIGNUM,
++        y: *mut BIGNUM,
++        ctx: *mut BN_CTX,
++    ) -> c_int;
++
++    pub fn EC_POINT_set_affine_coordinates_GFp(
++        group: *const EC_GROUP,
++        p: *mut EC_POINT,
++        x: *const BIGNUM,
++        y: *const BIGNUM,
++        ctx: *mut BN_CTX,
++    ) -> c_int;
++
++    #[cfg(not(osslconf = "OPENSSL_NO_EC2M"))]
++    pub fn EC_POINT_get_affine_coordinates_GF2m(
++        group: *const EC_GROUP,
++        p: *const EC_POINT,
++        x: *mut BIGNUM,
++        y: *mut BIGNUM,
++        ctx: *mut BN_CTX,
++    ) -> c_int;
+ 
+     pub fn EC_KEY_new() -> *mut EC_KEY;
+ 
+@@ -250,6 +268,17 @@ extern "C" {
+     #[cfg(any(ossl110, libressl273))]
+     pub fn ECDSA_SIG_set0(sig: *mut ECDSA_SIG, pr: *mut BIGNUM, ps: *mut BIGNUM) -> c_int;
+ 
++    pub fn d2i_ECDSA_SIG(
++        sig: *mut *mut ECDSA_SIG,
++        inp: *mut *const c_uchar,
++        length: c_long,
++    ) -> *mut ECDSA_SIG;
++
++    pub fn i2d_ECDSA_SIG(sig: *const ECDSA_SIG, out: *mut *mut c_uchar) -> c_int;
++}
++
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
++extern "C" {
+     pub fn ECDSA_do_sign(
+         dgst: *const c_uchar,
+         dgst_len: c_int,
+@@ -262,12 +291,4 @@ extern "C" {
+         sig: *const ECDSA_SIG,
+         eckey: *mut EC_KEY,
+     ) -> c_int;
+-
+-    pub fn d2i_ECDSA_SIG(
+-        sig: *mut *mut ECDSA_SIG,
+-        inp: *mut *const c_uchar,
+-        length: c_long,
+-    ) -> *mut ECDSA_SIG;
+-
+-    pub fn i2d_ECDSA_SIG(sig: *const ECDSA_SIG, out: *mut *mut c_uchar) -> c_int;
+ }
+diff --git a/src/handwritten/encoder.rs b/src/handwritten/encoder.rs
+new file mode 100644
+index 000000000..3613fab1c
+--- /dev/null
++++ b/src/handwritten/encoder.rs
+@@ -0,0 +1,56 @@
++use super::super::*;
++use libc::*;
++
++#[cfg(ossl300)]
++extern "C" {
++    pub fn OSSL_ENCODER_CTX_new() -> *mut OSSL_ENCODER_CTX;
++    pub fn OSSL_ENCODER_CTX_free(ctx: *mut OSSL_ENCODER_CTX);
++
++    pub fn OSSL_ENCODER_CTX_new_for_pkey(
++        pkey: *const EVP_PKEY,
++        selection: c_int,
++        output_type: *const c_char,
++        output_structure: *const c_char,
++        propquery: *const c_char,
++    ) -> *mut OSSL_ENCODER_CTX;
++
++    pub fn OSSL_ENCODER_CTX_set_selection(ctx: *mut OSSL_ENCODER_CTX, selection: c_int) -> c_int;
++    pub fn OSSL_ENCODER_CTX_set_output_type(
++        ctx: *mut OSSL_ENCODER_CTX,
++        output_type: *const c_char,
++    ) -> c_int;
++    pub fn OSSL_ENCODER_CTX_set_output_structure(
++        ctx: *mut OSSL_ENCODER_CTX,
++        output_structure: *const c_char,
++    ) -> c_int;
++
++    pub fn OSSL_ENCODER_CTX_set_cipher(
++        ctx: *mut OSSL_ENCODER_CTX,
++        cipher_name: *const c_char,
++        propquery: *const c_char,
++    ) -> c_int;
++    pub fn OSSL_ENCODER_CTX_set_passphrase(
++        ctx: *mut OSSL_ENCODER_CTX,
++        kstr: *const c_uchar,
++        klen: size_t,
++    ) -> c_int;
++    pub fn OSSL_ENCODER_CTX_set_pem_password_cb(
++        ctx: *mut OSSL_ENCODER_CTX,
++        cb: pem_password_cb,
++        cbarg: *mut c_void,
++    ) -> c_int;
++    pub fn OSSL_ENCODER_CTX_set_passphrase_cb(
++        ctx: *mut OSSL_ENCODER_CTX,
++        cb: OSSL_PASSPHRASE_CALLBACK,
++        cbarg: *mut c_void,
++    ) -> c_int;
++
++    pub fn OSSL_ENCODER_to_data(
++        ctx: *mut OSSL_ENCODER_CTX,
++        pdata: *mut *mut c_uchar,
++        pdata_len: *mut size_t,
++    ) -> c_int;
++    pub fn OSSL_ENCODER_to_bio(ctx: *mut OSSL_ENCODER_CTX, out: *mut BIO) -> c_int;
++    #[cfg(not(osslconf = "OPENSSL_NO_STDIO"))]
++    pub fn OSSL_ENCODER_to_fp(ctx: *mut OSSL_ENCODER_CTX, fp: *mut FILE) -> c_int;
++}
+diff --git a/src/handwritten/err.rs b/src/handwritten/err.rs
+index 5653c1d18..9ebc605cd 100644
+--- a/src/handwritten/err.rs
++++ b/src/handwritten/err.rs
+@@ -33,16 +33,9 @@ extern "C" {
+         data: *mut *const c_char,
+         flags: *mut c_int,
+     ) -> c_ulong;
+-    pub fn ERR_get_error_line_data(
+-        file: *mut *const c_char,
+-        line: *mut c_int,
+-        data: *mut *const c_char,
+-        flags: *mut c_int,
+-    ) -> c_ulong;
+     pub fn ERR_peek_last_error() -> c_ulong;
+     pub fn ERR_clear_error();
+     pub fn ERR_lib_error_string(err: c_ulong) -> *const c_char;
+-    pub fn ERR_func_error_string(err: c_ulong) -> *const c_char;
+     pub fn ERR_reason_error_string(err: c_ulong) -> *const c_char;
+     #[cfg(ossl110)]
+     pub fn ERR_load_strings(lib: c_int, str: *mut ERR_STRING_DATA) -> c_int;
+@@ -53,3 +46,14 @@ extern "C" {
+ 
+     pub fn ERR_get_next_error_library() -> c_int;
+ }
++
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
++extern "C" {
++    pub fn ERR_get_error_line_data(
++        file: *mut *const c_char,
++        line: *mut c_int,
++        data: *mut *const c_char,
++        flags: *mut c_int,
++    ) -> c_ulong;
++    pub fn ERR_func_error_string(err: c_ulong) -> *const c_char;
++}
+diff --git a/src/handwritten/evp.rs b/src/handwritten/evp.rs
+index a1be1da68..9a39a49d8 100644
+--- a/src/handwritten/evp.rs
++++ b/src/handwritten/evp.rs
+@@ -472,30 +472,64 @@ cfg_if! {
+         }
+     }
+ }
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
++const_ptr_api! {
++    extern "C" {
++        pub fn EVP_PKEY_get1_RSA(k: #[const_ptr_if(libressl420)] EVP_PKEY) -> *mut RSA;
++        pub fn EVP_PKEY_get1_DSA(k: #[const_ptr_if(libressl420)] EVP_PKEY) -> *mut DSA;
++        pub fn EVP_PKEY_get1_DH(k: #[const_ptr_if(libressl420)] EVP_PKEY) -> *mut DH;
++        pub fn EVP_PKEY_get1_EC_KEY(k: #[const_ptr_if(libressl420)] EVP_PKEY) -> *mut EC_KEY;
++    }
++}
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     pub fn EVP_PKEY_assign(pkey: *mut EVP_PKEY, typ: c_int, key: *mut c_void) -> c_int;
+ 
+     pub fn EVP_PKEY_set1_RSA(k: *mut EVP_PKEY, r: *mut RSA) -> c_int;
+-    pub fn EVP_PKEY_get1_RSA(k: *mut EVP_PKEY) -> *mut RSA;
+     pub fn EVP_PKEY_set1_DSA(k: *mut EVP_PKEY, k: *mut DSA) -> c_int;
+-    pub fn EVP_PKEY_get1_DSA(k: *mut EVP_PKEY) -> *mut DSA;
+     pub fn EVP_PKEY_set1_DH(k: *mut EVP_PKEY, k: *mut DH) -> c_int;
+-    pub fn EVP_PKEY_get1_DH(k: *mut EVP_PKEY) -> *mut DH;
+     pub fn EVP_PKEY_set1_EC_KEY(k: *mut EVP_PKEY, k: *mut EC_KEY) -> c_int;
+-    pub fn EVP_PKEY_get1_EC_KEY(k: *mut EVP_PKEY) -> *mut EC_KEY;
+ 
++    pub fn EVP_PKEY_cmp(a: *const EVP_PKEY, b: *const EVP_PKEY) -> c_int;
++}
++
++extern "C" {
+     pub fn EVP_PKEY_new() -> *mut EVP_PKEY;
+     pub fn EVP_PKEY_free(k: *mut EVP_PKEY);
+     #[cfg(any(ossl110, libressl270))]
+     pub fn EVP_PKEY_up_ref(pkey: *mut EVP_PKEY) -> c_int;
+ 
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_fromdata_init(ctx: *mut EVP_PKEY_CTX) -> c_int;
++
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_fromdata(
++        ctx: *mut EVP_PKEY_CTX,
++        ppkey: *mut *mut EVP_PKEY,
++        selection: c_int,
++        param: *mut OSSL_PARAM,
++    ) -> c_int;
++
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_todata(
++        ppkey: *const EVP_PKEY,
++        selection: c_int,
++        param: *mut *mut OSSL_PARAM,
++    ) -> c_int;
++
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_generate(ctx: *mut EVP_PKEY_CTX, k: *mut *mut EVP_PKEY) -> c_int;
++
+     pub fn d2i_AutoPrivateKey(
+         a: *mut *mut EVP_PKEY,
+         pp: *mut *const c_uchar,
+         length: c_long,
+     ) -> *mut EVP_PKEY;
+ 
+-    pub fn EVP_PKEY_cmp(a: *const EVP_PKEY, b: *const EVP_PKEY) -> c_int;
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_eq(a: *const EVP_PKEY, b: *const EVP_PKEY) -> c_int;
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_parameters_eq(a: *const EVP_PKEY, b: *const EVP_PKEY) -> c_int;
+ 
+     pub fn EVP_PKEY_copy_parameters(to: *mut EVP_PKEY, from: *const EVP_PKEY) -> c_int;
+ 
+@@ -535,6 +569,12 @@ extern "C" {
+ 
+     pub fn EVP_PKEY_CTX_new(k: *mut EVP_PKEY, e: *mut ENGINE) -> *mut EVP_PKEY_CTX;
+     pub fn EVP_PKEY_CTX_new_id(id: c_int, e: *mut ENGINE) -> *mut EVP_PKEY_CTX;
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_CTX_new_from_name(
++        libctx: *mut OSSL_LIB_CTX,
++        name: *const c_char,
++        propquery: *const c_char,
++    ) -> *mut EVP_PKEY_CTX;
+     pub fn EVP_PKEY_CTX_free(ctx: *mut EVP_PKEY_CTX);
+ 
+     pub fn EVP_PKEY_CTX_ctrl(
+@@ -580,9 +620,26 @@ extern "C" {
+         ...
+     ) -> *mut EVP_PKEY;
+     pub fn EVP_PKEY_keygen_init(ctx: *mut EVP_PKEY_CTX) -> c_int;
++    pub fn EVP_PKEY_paramgen_init(ctx: *mut EVP_PKEY_CTX) -> c_int;
+     pub fn EVP_PKEY_keygen(ctx: *mut EVP_PKEY_CTX, key: *mut *mut EVP_PKEY) -> c_int;
++    pub fn EVP_PKEY_paramgen(ctx: *mut EVP_PKEY_CTX, key: *mut *mut EVP_PKEY) -> c_int;
++
++    #[cfg(ossl111)]
++    pub fn EVP_PKEY_param_check(ctx: *mut EVP_PKEY_CTX) -> c_int;
++    #[cfg(ossl111)]
++    pub fn EVP_PKEY_public_check(ctx: *mut EVP_PKEY_CTX) -> c_int;
++    #[cfg(ossl111)]
++    pub fn EVP_PKEY_check(ctx: *mut EVP_PKEY_CTX) -> c_int;
+ 
+     pub fn EVP_PKEY_sign_init(ctx: *mut EVP_PKEY_CTX) -> c_int;
++
++    #[cfg(ossl340)]
++    pub fn EVP_PKEY_sign_message_init(
++        ctx: *mut EVP_PKEY_CTX,
++        algo: *mut EVP_SIGNATURE,
++        params: *const OSSL_PARAM,
++    ) -> c_int;
++
+     pub fn EVP_PKEY_sign(
+         ctx: *mut EVP_PKEY_CTX,
+         sig: *mut c_uchar,
+@@ -591,6 +648,14 @@ extern "C" {
+         tbslen: size_t,
+     ) -> c_int;
+     pub fn EVP_PKEY_verify_init(ctx: *mut EVP_PKEY_CTX) -> c_int;
++
++    #[cfg(ossl340)]
++    pub fn EVP_PKEY_verify_message_init(
++        ctx: *mut EVP_PKEY_CTX,
++        algo: *mut EVP_SIGNATURE,
++        params: *const OSSL_PARAM,
++    ) -> c_int;
++
+     pub fn EVP_PKEY_verify(
+         ctx: *mut EVP_PKEY_CTX,
+         sig: *const c_uchar,
+@@ -622,11 +687,34 @@ extern "C" {
+         sig: *const c_uchar,
+         siglen: size_t,
+     ) -> c_int;
++
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_encapsulate_init(ctx: *mut EVP_PKEY_CTX, params: *const OSSL_PARAM) -> c_int;
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_encapsulate(
++        ctx: *mut EVP_PKEY_CTX,
++        wrappedkey: *mut c_uchar,
++        wrappedkeylen: *mut size_t,
++        genkey: *mut c_uchar,
++        genkeylen: *mut size_t,
++    ) -> c_int;
++
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_decapsulate_init(ctx: *mut EVP_PKEY_CTX, params: *const OSSL_PARAM) -> c_int;
++    #[cfg(ossl300)]
++    pub fn EVP_PKEY_decapsulate(
++        ctx: *mut EVP_PKEY_CTX,
++        genkey: *mut c_uchar,
++        genkeylen: *mut size_t,
++        wrappedkey: *const c_uchar,
++        wrappedkeylen: size_t,
++    ) -> c_int;
+ }
+ 
+ const_ptr_api! {
+     extern "C" {
+         pub fn EVP_PKCS82PKEY(p8: #[const_ptr_if(any(ossl110, libressl280))] PKCS8_PRIV_KEY_INFO) -> *mut EVP_PKEY;
++        pub fn EVP_PKEY2PKCS8(pkey: #[const_ptr_if(any(ossl300))] EVP_PKEY) -> *mut PKCS8_PRIV_KEY_INFO;
+     }
+ }
+ 
+@@ -663,3 +751,78 @@ extern "C" {
+     pub fn EVP_EncodeBlock(dst: *mut c_uchar, src: *const c_uchar, src_len: c_int) -> c_int;
+     pub fn EVP_DecodeBlock(dst: *mut c_uchar, src: *const c_uchar, src_len: c_int) -> c_int;
+ }
++
++cfg_if! {
++    if #[cfg(ossl300)] {
++        extern "C" {
++            pub fn EVP_PKEY_gettable_params(pkey: *const EVP_PKEY) -> *const OSSL_PARAM;
++            pub fn EVP_PKEY_get_params(pkey: *const EVP_PKEY, params: *mut OSSL_PARAM) -> c_int;
++            pub fn EVP_PKEY_get_int_param(
++                pkey: *const EVP_PKEY,
++                key_name: *const c_char,
++                out: *mut c_int,
++            ) -> c_int;
++            pub fn EVP_PKEY_get_size_t_param(
++                pkey: *const EVP_PKEY,
++                key_name: *const c_char,
++                out: *mut size_t,
++            ) -> c_int;
++            pub fn EVP_PKEY_get_bn_param(
++                pkey: *const EVP_PKEY,
++                key_name: *const c_char,
++                out: *mut *mut BIGNUM,
++            ) -> c_int;
++            pub fn EVP_PKEY_get_utf8_string_param(
++                pkey: *const EVP_PKEY,
++                key_name: *const c_char,
++                str: *mut c_char,
++                max_buf_sz: size_t,
++                out_len: *mut size_t,
++            ) -> c_int;
++            pub fn EVP_PKEY_get_octet_string_param(
++                pkey: *const EVP_PKEY,
++                key_name: *const c_char,
++                buf: *mut c_uchar,
++                max_buf_sz: size_t,
++                out_len: *mut size_t,
++            ) -> c_int;
++
++            pub fn EVP_PKEY_settable_params(pkey: *const EVP_PKEY) -> *const OSSL_PARAM;
++            pub fn EVP_PKEY_set_params(pkey: *mut EVP_PKEY, params: *mut OSSL_PARAM) -> c_int;
++            pub fn EVP_PKEY_set_int_param(
++                pkey: *mut EVP_PKEY,
++                key_name: *const c_char,
++                in_val: c_int,
++            ) -> c_int;
++            pub fn EVP_PKEY_set_size_t_param(
++                pkey: *mut EVP_PKEY,
++                key_name: *const c_char,
++                in_val: size_t,
++            ) -> c_int;
++            pub fn EVP_PKEY_set_bn_param(
++                pkey: *mut EVP_PKEY,
++                key_name: *const c_char,
++                bn: *const BIGNUM,
++            ) -> c_int;
++            pub fn EVP_PKEY_set_utf8_string_param(
++                pkey: *mut EVP_PKEY,
++                key_name: *const c_char,
++                str: *const c_char,
++            ) -> c_int;
++            pub fn EVP_PKEY_set_octet_string_param(
++                pkey: *mut EVP_PKEY,
++                key_name: *const c_char,
++                buf: *const c_uchar,
++                bsize: size_t,
++            ) -> c_int;
++            pub fn EVP_SIGNATURE_free(s: *mut EVP_SIGNATURE);
++            pub fn EVP_SIGNATURE_up_ref(s: *mut EVP_SIGNATURE) -> c_int;
++            pub fn EVP_SIGNATURE_fetch(ctx: *mut OSSL_LIB_CTX,
++                                       algorithm: *const c_char,
++                                       properties: *const c_char)
++                                       -> *mut EVP_SIGNATURE;
++            pub fn EVP_SIGNATURE_get0_name(s: *const EVP_SIGNATURE) -> *const c_char;
++            pub fn EVP_SIGNATURE_get0_description(s: *const EVP_SIGNATURE) -> *const c_char;
++        }
++    }
++}
+diff --git a/src/handwritten/hmac.rs b/src/handwritten/hmac.rs
+index b52d63fb1..99ea80a59 100644
+--- a/src/handwritten/hmac.rs
++++ b/src/handwritten/hmac.rs
+@@ -2,6 +2,7 @@ use libc::*;
+ 
+ use super::super::*;
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ cfg_if! {
+     if #[cfg(any(ossl110, libressl350))] {
+         extern "C" {
+@@ -16,6 +17,7 @@ cfg_if! {
+     }
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     pub fn HMAC_Init_ex(
+         ctx: *mut HMAC_CTX,
+diff --git a/src/handwritten/mod.rs b/src/handwritten/mod.rs
+index 47b3360fd..e4005af3c 100644
+--- a/src/handwritten/mod.rs
++++ b/src/handwritten/mod.rs
+@@ -6,15 +6,20 @@ pub use self::cmac::*;
+ pub use self::cms::*;
+ pub use self::conf::*;
+ pub use self::crypto::*;
++#[cfg(ossl300)]
++pub use self::decoder::*;
+ pub use self::dh::*;
+ pub use self::dsa::*;
+ pub use self::ec::*;
++#[cfg(ossl300)]
++pub use self::encoder::*;
+ pub use self::err::*;
+ pub use self::evp::*;
+ pub use self::hmac::*;
+ pub use self::kdf::*;
+ pub use self::object::*;
+ pub use self::ocsp::*;
++#[cfg(ossl300)]
+ pub use self::params::*;
+ pub use self::pem::*;
+ pub use self::pkcs12::*;
+@@ -45,15 +50,20 @@ mod cmac;
+ mod cms;
+ mod conf;
+ mod crypto;
++#[cfg(ossl300)]
++mod decoder;
+ mod dh;
+ mod dsa;
+ mod ec;
++#[cfg(ossl300)]
++mod encoder;
+ mod err;
+ mod evp;
+ mod hmac;
+ mod kdf;
+ mod object;
+ mod ocsp;
++#[cfg(ossl300)]
+ mod params;
+ mod pem;
+ mod pkcs12;
+diff --git a/src/handwritten/params.rs b/src/handwritten/params.rs
+index 542cef337..8fae2f218 100644
+--- a/src/handwritten/params.rs
++++ b/src/handwritten/params.rs
+@@ -2,15 +2,90 @@ use super::super::*;
+ use libc::*;
+ 
+ extern "C" {
+-    #[cfg(ossl300)]
++    pub fn OSSL_PARAM_free(p: *mut OSSL_PARAM);
++    pub fn OSSL_PARAM_dup(params: *const OSSL_PARAM) -> *mut OSSL_PARAM;
++    pub fn OSSL_PARAM_merge(
++        params: *const OSSL_PARAM,
++        params1: *const OSSL_PARAM,
++    ) -> *mut OSSL_PARAM;
+     pub fn OSSL_PARAM_construct_uint(key: *const c_char, buf: *mut c_uint) -> OSSL_PARAM;
+-    #[cfg(ossl300)]
+     pub fn OSSL_PARAM_construct_end() -> OSSL_PARAM;
+-    #[cfg(ossl300)]
+     pub fn OSSL_PARAM_construct_octet_string(
+         key: *const c_char,
+         buf: *mut c_void,
+         bsize: size_t,
+     ) -> OSSL_PARAM;
+ 
++    pub fn OSSL_PARAM_locate(p: *mut OSSL_PARAM, key: *const c_char) -> *mut OSSL_PARAM;
++    pub fn OSSL_PARAM_locate_const(
++        params: *const OSSL_PARAM,
++        key: *const c_char,
++    ) -> *const OSSL_PARAM;
++    pub fn OSSL_PARAM_get_BN(p: *const OSSL_PARAM, val: *mut *mut BIGNUM) -> c_int;
++    pub fn OSSL_PARAM_get_utf8_string(
++        p: *const OSSL_PARAM,
++        val: *mut *mut c_char,
++        max_len: usize,
++    ) -> c_int;
++    pub fn OSSL_PARAM_get_utf8_string_ptr(p: *const OSSL_PARAM, val: *mut *const c_char) -> c_int;
++    pub fn OSSL_PARAM_get_octet_string(
++        p: *const OSSL_PARAM,
++        val: *mut *mut c_void,
++        max_len: usize,
++        used_len: *mut usize,
++    ) -> c_int;
++    pub fn OSSL_PARAM_get_octet_string_ptr(
++        p: *const OSSL_PARAM,
++        val: *mut *const c_void,
++        used_len: *mut usize,
++    ) -> c_int;
++
++    pub fn OSSL_PARAM_BLD_new() -> *mut OSSL_PARAM_BLD;
++    pub fn OSSL_PARAM_BLD_free(bld: *mut OSSL_PARAM_BLD);
++    pub fn OSSL_PARAM_BLD_to_param(bld: *mut OSSL_PARAM_BLD) -> *mut OSSL_PARAM;
++    pub fn OSSL_PARAM_BLD_push_uint(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        val: c_uint,
++    ) -> c_int;
++    pub fn OSSL_PARAM_BLD_push_size_t(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        val: size_t,
++    ) -> c_int;
++    pub fn OSSL_PARAM_BLD_push_BN(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        bn: *const BIGNUM,
++    ) -> c_int;
++    pub fn OSSL_PARAM_BLD_push_BN_pad(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        bn: *const BIGNUM,
++        sz: size_t,
++    ) -> c_int;
++    pub fn OSSL_PARAM_BLD_push_utf8_string(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        buf: *const c_char,
++        bsize: size_t,
++    ) -> c_int;
++    pub fn OSSL_PARAM_BLD_push_utf8_ptr(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        buf: *mut c_char,
++        bsize: size_t,
++    ) -> c_int;
++    pub fn OSSL_PARAM_BLD_push_octet_string(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        buf: *const c_void,
++        bsize: size_t,
++    ) -> c_int;
++    pub fn OSSL_PARAM_BLD_push_octet_ptr(
++        bld: *mut OSSL_PARAM_BLD,
++        key: *const c_char,
++        buf: *mut c_void,
++        bsize: size_t,
++    ) -> c_int;
+ }
+diff --git a/src/handwritten/pem.rs b/src/handwritten/pem.rs
+index 42997177e..099aea768 100644
+--- a/src/handwritten/pem.rs
++++ b/src/handwritten/pem.rs
+@@ -15,35 +15,6 @@ const_ptr_api! {
+         pub fn PEM_write_bio_X509(bio: *mut BIO, x509: #[const_ptr_if(ossl300)] X509) -> c_int;
+         pub fn PEM_write_bio_X509_REQ(bio: *mut BIO, x509: #[const_ptr_if(ossl300)] X509_REQ) -> c_int;
+         pub fn PEM_write_bio_X509_CRL(bio: *mut BIO, x509: #[const_ptr_if(ossl300)] X509_CRL) -> c_int;
+-        pub fn PEM_write_bio_RSAPrivateKey(
+-            bp: *mut BIO,
+-            rsa: #[const_ptr_if(ossl300)] RSA,
+-            cipher: *const EVP_CIPHER,
+-            kstr: #[const_ptr_if(ossl300)] c_uchar,
+-            klen: c_int,
+-            callback: pem_password_cb,
+-            user_data: *mut c_void,
+-        ) -> c_int;
+-        pub fn PEM_write_bio_RSA_PUBKEY(bp: *mut BIO, rsa: #[const_ptr_if(ossl300)] RSA) -> c_int;
+-        pub fn PEM_write_bio_DSAPrivateKey(
+-            bp: *mut BIO,
+-            dsa: #[const_ptr_if(ossl300)] DSA,
+-            cipher: *const EVP_CIPHER,
+-            kstr: #[const_ptr_if(ossl300)] c_uchar,
+-            klen: c_int,
+-            callback: pem_password_cb,
+-            user_data: *mut c_void,
+-        ) -> c_int;
+-        pub fn PEM_write_bio_ECPrivateKey(
+-            bio: *mut BIO,
+-            key: #[const_ptr_if(ossl300)] EC_KEY,
+-            cipher: *const EVP_CIPHER,
+-            kstr: #[const_ptr_if(ossl300)] c_uchar,
+-            klen: c_int,
+-            callback: pem_password_cb,
+-            user_data: *mut c_void,
+-        ) -> c_int;
+-        pub fn PEM_write_bio_DSA_PUBKEY(bp: *mut BIO, dsa: #[const_ptr_if(ossl300)] DSA) -> c_int;
+         pub fn PEM_write_bio_PrivateKey(
+             bio: *mut BIO,
+             pkey: #[const_ptr_if(ossl300)] EVP_PKEY,
+@@ -64,7 +35,6 @@ const_ptr_api! {
+             user_data: *mut c_void,
+         ) -> c_int;
+         pub fn PEM_write_bio_PKCS7(bp: *mut BIO, x: #[const_ptr_if(ossl300)] PKCS7) -> c_int;
+-        pub fn PEM_write_bio_EC_PUBKEY(bp: *mut BIO, ec: #[const_ptr_if(ossl300)] EC_KEY) -> c_int;
+         pub fn i2d_PKCS8PrivateKey_bio(
+             bp: *mut BIO,
+             x: #[const_ptr_if(ossl300)] EVP_PKEY,
+@@ -96,56 +66,6 @@ extern "C" {
+         callback: pem_password_cb,
+         user_data: *mut c_void,
+     ) -> *mut X509_CRL;
+-    pub fn PEM_read_bio_RSAPrivateKey(
+-        bio: *mut BIO,
+-        rsa: *mut *mut RSA,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut RSA;
+-    pub fn PEM_read_bio_RSAPublicKey(
+-        bio: *mut BIO,
+-        rsa: *mut *mut RSA,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut RSA;
+-    pub fn PEM_write_bio_RSAPublicKey(bp: *mut BIO, rsa: *const RSA) -> c_int;
+-    pub fn PEM_read_bio_RSA_PUBKEY(
+-        bio: *mut BIO,
+-        rsa: *mut *mut RSA,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut RSA;
+-    pub fn PEM_read_bio_DSAPrivateKey(
+-        bp: *mut BIO,
+-        dsa: *mut *mut DSA,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut DSA;
+-    pub fn PEM_read_bio_DSA_PUBKEY(
+-        bp: *mut BIO,
+-        dsa: *mut *mut DSA,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut DSA;
+-    pub fn PEM_read_bio_ECPrivateKey(
+-        bio: *mut BIO,
+-        key: *mut *mut EC_KEY,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut EC_KEY;
+-    pub fn PEM_read_bio_EC_PUBKEY(
+-        bp: *mut BIO,
+-        ec: *mut *mut EC_KEY,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut EC_KEY;
+-    pub fn PEM_read_bio_DHparams(
+-        bio: *mut BIO,
+-        out: *mut *mut DH,
+-        callback: pem_password_cb,
+-        user_data: *mut c_void,
+-    ) -> *mut DH;
+-    pub fn PEM_write_bio_DHparams(bio: *mut BIO, x: *const DH) -> c_int;
+     pub fn PEM_read_bio_PrivateKey(
+         bio: *mut BIO,
+         out: *mut *mut EVP_PKEY,
+@@ -189,3 +109,90 @@ extern "C" {
+     #[cfg(ossl101)]
+     pub fn PEM_write_bio_CMS(bio: *mut BIO, cms: *const CMS_ContentInfo) -> c_int;
+ }
++
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
++const_ptr_api! {
++    extern "C" {
++        pub fn PEM_read_bio_DHparams(
++            bio: *mut BIO,
++            out: *mut *mut DH,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut DH;
++        pub fn PEM_read_bio_DSAPrivateKey(
++            bp: *mut BIO,
++            dsa: *mut *mut DSA,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut DSA;
++        pub fn PEM_read_bio_DSA_PUBKEY(
++            bp: *mut BIO,
++            dsa: *mut *mut DSA,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut DSA;
++        pub fn PEM_read_bio_ECPrivateKey(
++            bio: *mut BIO,
++            key: *mut *mut EC_KEY,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut EC_KEY;
++        pub fn PEM_read_bio_EC_PUBKEY(
++            bp: *mut BIO,
++            ec: *mut *mut EC_KEY,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut EC_KEY;
++        pub fn PEM_read_bio_RSAPrivateKey(
++            bio: *mut BIO,
++            rsa: *mut *mut RSA,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut RSA;
++        pub fn PEM_read_bio_RSA_PUBKEY(
++            bio: *mut BIO,
++            rsa: *mut *mut RSA,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut RSA;
++        pub fn PEM_read_bio_RSAPublicKey(
++            bio: *mut BIO,
++            rsa: *mut *mut RSA,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> *mut RSA;
++
++        pub fn PEM_write_bio_DHparams(bio: *mut BIO, x: *const DH) -> c_int;
++        pub fn PEM_write_bio_DSAPrivateKey(
++            bp: *mut BIO,
++            dsa: #[const_ptr_if(ossl300)] DSA,
++            cipher: *const EVP_CIPHER,
++            kstr: #[const_ptr_if(ossl300)] c_uchar,
++            klen: c_int,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> c_int;
++        pub fn PEM_write_bio_DSA_PUBKEY(bp: *mut BIO, dsa: #[const_ptr_if(ossl300)] DSA) -> c_int;
++        pub fn PEM_write_bio_ECPrivateKey(
++            bio: *mut BIO,
++            key: #[const_ptr_if(ossl300)] EC_KEY,
++            cipher: *const EVP_CIPHER,
++            kstr: #[const_ptr_if(ossl300)] c_uchar,
++            klen: c_int,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> c_int;
++        pub fn PEM_write_bio_EC_PUBKEY(bp: *mut BIO, ec: #[const_ptr_if(ossl300)] EC_KEY) -> c_int;
++        pub fn PEM_write_bio_RSAPrivateKey(
++            bp: *mut BIO,
++            rsa: #[const_ptr_if(ossl300)] RSA,
++            cipher: *const EVP_CIPHER,
++            kstr: #[const_ptr_if(ossl300)] c_uchar,
++            klen: c_int,
++            callback: pem_password_cb,
++            user_data: *mut c_void,
++        ) -> c_int;
++        pub fn PEM_write_bio_RSA_PUBKEY(bp: *mut BIO, rsa: #[const_ptr_if(ossl300)] RSA) -> c_int;
++        pub fn PEM_write_bio_RSAPublicKey(bp: *mut BIO, rsa: *const RSA) -> c_int;
++    }
++}
+diff --git a/src/handwritten/rsa.rs b/src/handwritten/rsa.rs
+index d05edfc30..5aca2b898 100644
+--- a/src/handwritten/rsa.rs
++++ b/src/handwritten/rsa.rs
+@@ -4,6 +4,9 @@ use libc::*;
+ cfg_if! {
+     if #[cfg(ossl300)] {
+         extern "C" {
++            pub fn EVP_PKEY_CTX_set_rsa_keygen_bits(ctx: *mut EVP_PKEY_CTX, bits: c_int) -> c_int;
++            pub fn EVP_PKEY_CTX_set1_rsa_keygen_pubexp(ctx: *mut EVP_PKEY_CTX, pubexp: *mut BIGNUM) -> c_int;
++
+             pub fn EVP_PKEY_CTX_set_rsa_padding(ctx: *mut EVP_PKEY_CTX, pad_mode: c_int) -> c_int;
+             pub fn EVP_PKEY_CTX_get_rsa_padding(ctx: *mut EVP_PKEY_CTX, pad_mode: *mut c_int) -> c_int;
+ 
+@@ -13,6 +16,7 @@ cfg_if! {
+     }
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     pub fn RSA_new() -> *mut RSA;
+     pub fn RSA_size(k: *const RSA) -> c_int;
+diff --git a/src/handwritten/ssl.rs b/src/handwritten/ssl.rs
+index 163c75aed..9a6ebdf18 100644
+--- a/src/handwritten/ssl.rs
++++ b/src/handwritten/ssl.rs
+@@ -478,6 +478,8 @@ const_ptr_api! {
+ extern "C" {
+     #[cfg(ossl111)]
+     pub fn SSL_CIPHER_get_handshake_digest(cipher: *const SSL_CIPHER) -> *const EVP_MD;
++    #[cfg(ossl111)]
++    pub fn SSL_CIPHER_get_protocol_id(cipher: *const SSL_CIPHER) -> u16;
+     pub fn SSL_CIPHER_get_name(cipher: *const SSL_CIPHER) -> *const c_char;
+     #[cfg(ossl111)]
+     pub fn SSL_CIPHER_standard_name(cipher: *const SSL_CIPHER) -> *const c_char;
+@@ -834,6 +836,7 @@ extern "C" {
+     pub fn SSL_get_ex_data_X509_STORE_CTX_idx() -> c_int;
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ extern "C" {
+     #[link_name = "SSL_CTX_set_tmp_dh_callback"]
+     pub fn SSL_CTX_set_tmp_dh_callback__fixed_rust(
+@@ -1011,3 +1014,9 @@ extern "C" {
+     pub fn SSL_get_value_uint(s: *mut SSL, class_: u32, id: u32, v: *mut u64) -> c_int;
+     pub fn SSL_set_value_uint(s: *mut SSL, class_: u32, id: u32, v: u64) -> c_int;
+ }
++
++#[cfg(ossl300)]
++extern "C" {
++    pub fn SSL_CTX_set0_tmp_dh_pkey(ctx: *mut SSL_CTX, dhpkey: *mut EVP_PKEY) -> c_int;
++    pub fn SSL_set0_tmp_dh_pkey(s: *mut SSL, dhpkey: *mut EVP_PKEY) -> c_int;
++}
+diff --git a/src/handwritten/types.rs b/src/handwritten/types.rs
+index d465a4414..c4692b1bd 100644
+--- a/src/handwritten/types.rs
++++ b/src/handwritten/types.rs
+@@ -1072,9 +1072,9 @@ cfg_if! {
+ pub enum COMP_CTX {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(all(any(ossl110, libressl350), not(osslconf = "OPENSSL_NO_COMP")))] {
+         pub enum COMP_METHOD {}
+-    } else {
++    } else if #[cfg(not(osslconf = "OPENSSL_NO_COMP"))] {
+         #[repr(C)]
+         pub struct COMP_METHOD {
+             pub type_: c_int,
+@@ -1134,13 +1134,32 @@ pub enum OSSL_LIB_CTX {}
+ #[repr(C)]
+ pub struct OSSL_PARAM {
+     key: *const c_char,
+-    data_type: c_uchar,
++    data_type: c_uint,
+     data: *mut c_void,
+     data_size: size_t,
+     return_size: size_t,
+ }
+ 
++#[cfg(ossl300)]
++pub enum OSSL_PARAM_BLD {}
++
+ #[cfg(ossl300)]
+ pub enum EVP_KDF {}
+ #[cfg(ossl300)]
+ pub enum EVP_KDF_CTX {}
++
++#[cfg(ossl300)]
++pub enum OSSL_ENCODER_CTX {}
++#[cfg(ossl300)]
++pub enum OSSL_DECODER_CTX {}
++
++#[cfg(ossl300)]
++pub type OSSL_PASSPHRASE_CALLBACK = Option<
++    unsafe extern "C" fn(
++        pass: *mut c_char,
++        pass_size: size_t,
++        pass_len: *mut size_t,
++        params: *const OSSL_PARAM,
++        arg: *mut c_void,
++    ) -> c_int,
++>;
+diff --git a/src/handwritten/x509.rs b/src/handwritten/x509.rs
+index 0bb682764..8c56309f2 100644
+--- a/src/handwritten/x509.rs
++++ b/src/handwritten/x509.rs
+@@ -169,15 +169,25 @@ const_ptr_api! {
+         pub fn i2d_PUBKEY_bio(b: *mut BIO, x: #[const_ptr_if(ossl300)] EVP_PKEY) -> c_int;
+ 
+         pub fn i2d_PUBKEY(k: #[const_ptr_if(ossl300)] EVP_PKEY, buf: *mut *mut u8) -> c_int;
++        pub fn i2d_PrivateKey(k: #[const_ptr_if(ossl300)] EVP_PKEY, buf: *mut *mut u8) -> c_int;
++    }
++}
++
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
++const_ptr_api! {
++    extern "C" {
+         pub fn i2d_RSA_PUBKEY(k: #[const_ptr_if(ossl300)] RSA, buf: *mut *mut u8) -> c_int;
+         pub fn i2d_DSA_PUBKEY(a: #[const_ptr_if(ossl300)] DSA, pp: *mut *mut c_uchar) -> c_int;
+-        pub fn i2d_PrivateKey(k: #[const_ptr_if(ossl300)] EVP_PKEY, buf: *mut *mut u8) -> c_int;
+         pub fn i2d_ECPrivateKey(ec_key: #[const_ptr_if(ossl300)] EC_KEY, pp: *mut *mut c_uchar) -> c_int;
+         pub fn i2d_EC_PUBKEY(a: #[const_ptr_if(ossl300)] EC_KEY, pp: *mut *mut c_uchar) -> c_int;
+     }
+ }
+ extern "C" {
+     pub fn d2i_PUBKEY(k: *mut *mut EVP_PKEY, buf: *mut *const u8, len: c_long) -> *mut EVP_PKEY;
++}
++
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
++extern "C" {
+     pub fn d2i_RSA_PUBKEY(k: *mut *mut RSA, buf: *mut *const u8, len: c_long) -> *mut RSA;
+     pub fn d2i_DSA_PUBKEY(k: *mut *mut DSA, pp: *mut *const c_uchar, length: c_long) -> *mut DSA;
+     pub fn d2i_EC_PUBKEY(
+diff --git a/src/lib.rs b/src/lib.rs
+index 0e8923bac..832adf9ae 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -35,10 +35,13 @@ extern crate aws_lc_sys;
+ #[cfg(awslc)]
+ #[path = "."]
+ mod aws_lc {
+-    #[cfg(feature = "aws-lc")]
++    #[cfg(all(feature = "aws-lc", not(feature = "aws-lc-fips")))]
+     pub use aws_lc_sys::*;
+ 
+-    #[cfg(not(feature = "aws-lc"))]
++    #[cfg(feature = "aws-lc-fips")]
++    pub use aws_lc_fips_sys::*;
++
++    #[cfg(not(any(feature = "aws-lc", feature = "aws-lc-fips")))]
+     include!(concat!(env!("OUT_DIR"), "/bindgen.rs"));
+ 
+     use libc::{c_char, c_long, c_void};
+@@ -69,7 +72,11 @@ mod openssl {
+     pub use self::bio::*;
+     pub use self::bn::*;
+     pub use self::cms::*;
++    #[cfg(ossl300)]
++    pub use self::core_dispatch::*;
+     pub use self::crypto::*;
++    pub use self::dh::*;
++    pub use self::dsa::*;
+     pub use self::dtls1::*;
+     pub use self::ec::*;
+     pub use self::err::*;
+@@ -99,7 +106,11 @@ mod openssl {
+     mod bio;
+     mod bn;
+     mod cms;
++    #[cfg(ossl300)]
++    mod core_dispatch;
+     mod crypto;
++    mod dh;
++    mod dsa;
+     mod dtls1;
+     mod ec;
+     mod err;
+@@ -164,12 +175,12 @@ mod openssl {
+             _file: *const c_char,
+             _line: c_int,
+         ) {
+-            let mutex = &(*MUTEXES)[n as usize];
++            let mutex = &(&(*MUTEXES))[n as usize];
+ 
+             if mode & CRYPTO_LOCK != 0 {
+-                (*GUARDS)[n as usize] = Some(mutex.lock().unwrap());
++                (&mut (*GUARDS))[n as usize] = Some(mutex.lock().unwrap());
+             } else {
+-                if let None = (*GUARDS)[n as usize].take() {
++                if let None = (&mut (*GUARDS))[n as usize].take() {
+                     let _ = writeln!(
+                         io::stderr(),
+                         "BUG: rust-openssl lock {} already unlocked, aborting",
+diff --git a/src/rsa.rs b/src/rsa.rs
+index 64107cd6b..36b8564ec 100644
+--- a/src/rsa.rs
++++ b/src/rsa.rs
+@@ -7,6 +7,26 @@ pub const RSA_F4: c_long = 0x10001;
+ 
+ cfg_if! {
+     if #[cfg(not(ossl300))] {
++        pub unsafe fn EVP_PKEY_CTX_set_rsa_keygen_bits(ctx: *mut EVP_PKEY_CTX, bits: c_int) -> c_int {
++            EVP_PKEY_CTX_ctrl(
++                ctx,
++                EVP_PKEY_RSA,
++                EVP_PKEY_OP_KEYGEN,
++                EVP_PKEY_CTRL_RSA_KEYGEN_BITS,
++                bits,
++                ptr::null_mut(),
++            )
++        }
++        pub unsafe fn EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx: *mut EVP_PKEY_CTX, pubexp: *mut BIGNUM) -> c_int {
++            EVP_PKEY_CTX_ctrl(
++                ctx,
++                EVP_PKEY_RSA,
++                EVP_PKEY_OP_KEYGEN,
++                EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP,
++                0,
++                pubexp as *mut _,
++            )
++        }
+         pub unsafe fn EVP_PKEY_CTX_set_rsa_padding(ctx: *mut EVP_PKEY_CTX, pad: c_int) -> c_int {
+             EVP_PKEY_CTX_ctrl(
+                 ctx,
+@@ -82,6 +102,8 @@ pub unsafe fn EVP_PKEY_CTX_set0_rsa_oaep_label(
+ 
+ pub const EVP_PKEY_CTRL_RSA_PADDING: c_int = EVP_PKEY_ALG_CTRL + 1;
+ pub const EVP_PKEY_CTRL_RSA_PSS_SALTLEN: c_int = EVP_PKEY_ALG_CTRL + 2;
++pub const EVP_PKEY_CTRL_RSA_KEYGEN_BITS: c_int = EVP_PKEY_ALG_CTRL + 3;
++pub const EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP: c_int = EVP_PKEY_ALG_CTRL + 4;
+ 
+ pub const EVP_PKEY_CTRL_RSA_MGF1_MD: c_int = EVP_PKEY_ALG_CTRL + 5;
+ 
+diff --git a/src/ssl.rs b/src/ssl.rs
+index 38d2184b4..407945404 100644
+--- a/src/ssl.rs
++++ b/src/ssl.rs
+@@ -315,7 +315,9 @@ pub const SSL_ERROR_WANT_CLIENT_HELLO_CB: c_int = 11;
+ pub const SSL_VERIFY_NONE: c_int = 0;
+ pub const SSL_VERIFY_PEER: c_int = 1;
+ pub const SSL_VERIFY_FAIL_IF_NO_PEER_CERT: c_int = 2;
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub const SSL_CTRL_SET_TMP_DH: c_int = 3;
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub const SSL_CTRL_SET_TMP_ECDH: c_int = 4;
+ #[cfg(any(libressl, all(ossl101, not(ossl110))))]
+ pub const SSL_CTRL_GET_SESSION_REUSED: c_int = 8;
+@@ -352,6 +354,8 @@ pub const SSL_CTRL_SET_VERIFY_CERT_STORE: c_int = 106;
+ #[cfg(ossl300)]
+ pub const SSL_CTRL_GET_PEER_TMP_KEY: c_int = 109;
+ #[cfg(ossl110)]
++pub const SSL_CTRL_SET_DH_AUTO: c_int = 118;
++#[cfg(ossl110)]
+ pub const SSL_CTRL_GET_EXTMS_SUPPORT: c_int = 122;
+ #[cfg(any(ossl110, libressl261))]
+ pub const SSL_CTRL_SET_MIN_PROTO_VERSION: c_int = 123;
+@@ -364,22 +368,36 @@ pub const SSL_CTRL_GET_MAX_PROTO_VERSION: c_int = 131;
+ #[cfg(ossl300)]
+ pub const SSL_CTRL_GET_TMP_KEY: c_int = 133;
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn SSL_CTX_set_tmp_dh(ctx: *mut SSL_CTX, dh: *mut DH) -> c_long {
+     SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TMP_DH, 0, dh as *mut c_void)
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn SSL_CTX_set_tmp_ecdh(ctx: *mut SSL_CTX, key: *mut EC_KEY) -> c_long {
+     SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TMP_ECDH, 0, key as *mut c_void)
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn SSL_set_tmp_dh(ssl: *mut SSL, dh: *mut DH) -> c_long {
+     SSL_ctrl(ssl, SSL_CTRL_SET_TMP_DH, 0, dh as *mut c_void)
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+ pub unsafe fn SSL_set_tmp_ecdh(ssl: *mut SSL, key: *mut EC_KEY) -> c_long {
+     SSL_ctrl(ssl, SSL_CTRL_SET_TMP_ECDH, 0, key as *mut c_void)
+ }
+ 
++#[cfg(ossl110)]
++pub unsafe fn SSL_CTX_set_dh_auto(ctx: *mut SSL_CTX, onoff: c_int) -> c_long {
++    SSL_CTX_ctrl(ctx, SSL_CTRL_SET_DH_AUTO, onoff as c_long, ptr::null_mut())
++}
++
++#[cfg(ossl110)]
++pub unsafe fn SSL_set_dh_auto(ssl: *mut SSL, onoff: c_int) -> c_long {
++    SSL_ctrl(ssl, SSL_CTRL_SET_DH_AUTO, onoff as c_long, ptr::null_mut())
++}
++
+ pub unsafe fn SSL_CTX_add_extra_chain_cert(ctx: *mut SSL_CTX, x509: *mut X509) -> c_long {
+     SSL_CTX_ctrl(ctx, SSL_CTRL_EXTRA_CHAIN_CERT, 0, x509 as *mut c_void)
+ }
+@@ -403,6 +421,14 @@ pub unsafe fn SSL_set0_verify_cert_store(ssl: *mut SSL, st: *mut X509_STORE) ->
+ 
+ cfg_if! {
+     if #[cfg(ossl111)] {
++        pub unsafe fn SSL_set1_groups_list(ctx: *mut SSL, s: *const c_char) -> c_long {
++            SSL_ctrl(
++                ctx,
++                SSL_CTRL_SET_GROUPS_LIST,
++                0,
++                s as *const c_void as *mut c_void,
++            )
++        }
+         pub unsafe fn SSL_CTX_set1_groups_list(ctx: *mut SSL_CTX, s: *const c_char) -> c_long {
+             SSL_CTX_ctrl(
+                 ctx,
+@@ -413,6 +439,7 @@ cfg_if! {
+         }
+     } else if #[cfg(libressl251)] {
+         extern "C" {
++            pub fn SSL_set1_groups_list(ctx: *mut SSL, list: *const c_char) -> c_int;
+             pub fn SSL_CTX_set1_groups_list(ctx: *mut SSL_CTX, s: *const c_char) -> c_int;
+         }
+     }
+@@ -581,11 +608,13 @@ pub unsafe fn SSL_CTX_set_read_ahead(ctx: *mut SSL_CTX, m: c_long) -> c_long {
+ 
+ #[allow(clashing_extern_declarations)]
+ extern "C" {
++    #[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+     #[deprecated(note = "use SSL_CTX_set_tmp_dh_callback__fixed_rust instead")]
+     pub fn SSL_CTX_set_tmp_dh_callback(
+         ctx: *mut SSL_CTX,
+         dh: unsafe extern "C" fn(ssl: *mut SSL, is_export: c_int, keylength: c_int) -> *mut DH,
+     );
++    #[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
+     #[deprecated(note = "use SSL_set_tmp_dh_callback__fixed_rust instead")]
+     pub fn SSL_set_tmp_dh_callback(
+         ctx: *mut SSL,
+diff --git a/src/tls1.rs b/src/tls1.rs
+index 7ff0b9df9..99e545087 100644
+--- a/src/tls1.rs
++++ b/src/tls1.rs
+@@ -109,6 +109,7 @@ pub unsafe fn SSL_CTX_set_tlsext_status_cb(
+     )
+ }
+ 
++#[cfg(not(osslconf = "OPENSSL_NO_SRTP"))]
+ pub unsafe fn SSL_CTX_set_tlsext_status_arg(ctx: *mut SSL_CTX, arg: *mut c_void) -> c_long {
+     SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG, 0, arg)
+ }
+diff --git a/src/types.rs b/src/types.rs
+index 10c8f6771..76f94809f 100644
+--- a/src/types.rs
++++ b/src/types.rs
+@@ -19,3 +19,9 @@ cfg_if! {
+         }
+     }
+ }
++
++cfg_if! {
++    if #[cfg(ossl300)] {
++        pub enum EVP_SIGNATURE {}
++    }
++}
+diff --git a/src/x509_vfy.rs b/src/x509_vfy.rs
+index 2fa176fed..a576c9a99 100644
+--- a/src/x509_vfy.rs
++++ b/src/x509_vfy.rs
+@@ -76,11 +76,11 @@ pub const X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM: c_int = 59;
+ pub const X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED: c_int = 60;
+ #[cfg(ossl102)]
+ pub const X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256: c_int = 61;
+-#[cfg(ossl102)]
++#[cfg(any(ossl102, libressl251))]
+ pub const X509_V_ERR_HOSTNAME_MISMATCH: c_int = 62;
+-#[cfg(ossl102)]
++#[cfg(any(ossl102, libressl251))]
+ pub const X509_V_ERR_EMAIL_MISMATCH: c_int = 63;
+-#[cfg(ossl102)]
++#[cfg(any(ossl102, libressl251))]
+ pub const X509_V_ERR_IP_ADDRESS_MISMATCH: c_int = 64;
+ cfg_if! {
+     if #[cfg(ossl110)] {
+@@ -102,7 +102,7 @@ pub const X509_V_ERR_INVALID_CA: c_int = 79;
+ 
+ #[cfg(not(any(ossl110, libressl370)))]
+ pub const X509_V_FLAG_CB_ISSUER_CHECK: c_ulong = 0x1;
+-#[cfg(any(ossl110, libressl370))]
++#[cfg(all(any(ossl110, libressl370), not(osslconf = "OPENSSL_NO_DEPRECATED_3_0")))]
+ pub const X509_V_FLAG_CB_ISSUER_CHECK: c_ulong = 0x0;
+ pub const X509_V_FLAG_USE_CHECK_TIME: c_ulong = 0x2;
+ pub const X509_V_FLAG_CRL_CHECK: c_ulong = 0x4;
+@@ -118,7 +118,7 @@ pub const X509_V_FLAG_NOTIFY_POLICY: c_ulong = 0x800;
+ pub const X509_V_FLAG_EXTENDED_CRL_SUPPORT: c_ulong = 0x1000;
+ pub const X509_V_FLAG_USE_DELTAS: c_ulong = 0x2000;
+ pub const X509_V_FLAG_CHECK_SS_SIGNATURE: c_ulong = 0x4000;
+-#[cfg(ossl102)]
++#[cfg(any(ossl102, libressl251))]
+ pub const X509_V_FLAG_TRUSTED_FIRST: c_ulong = 0x8000;
+ #[cfg(ossl102)]
+ pub const X509_V_FLAG_SUITEB_128_LOS_ONLY: c_ulong = 0x10000;
+@@ -126,11 +126,11 @@ pub const X509_V_FLAG_SUITEB_128_LOS_ONLY: c_ulong = 0x10000;
+ pub const X509_V_FLAG_SUITEB_192_LOS: c_ulong = 0x20000;
+ #[cfg(ossl102)]
+ pub const X509_V_FLAG_SUITEB_128_LOS: c_ulong = 0x30000;
+-#[cfg(ossl102)]
++#[cfg(any(ossl102, libressl251))]
+ pub const X509_V_FLAG_PARTIAL_CHAIN: c_ulong = 0x80000;
+-#[cfg(ossl110)]
++#[cfg(any(ossl110, libressl251))]
+ pub const X509_V_FLAG_NO_ALT_CHAINS: c_ulong = 0x100000;
+-#[cfg(ossl110)]
++#[cfg(any(ossl110, libressl251))]
+ pub const X509_V_FLAG_NO_CHECK_TIME: c_ulong = 0x200000;
+ 
+ pub unsafe fn X509_LOOKUP_add_dir(
