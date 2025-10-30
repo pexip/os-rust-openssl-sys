@@ -1,8 +1,72 @@
 diff --git a/build/cfgs.rs b/build/cfgs.rs
-index ca9970740..edfa67333 100644
+index ca99707..14118b0 100644
 --- a/build/cfgs.rs
 +++ b/build/cfgs.rs
-@@ -71,9 +71,15 @@ pub fn get(openssl_version: Option<u64>, libressl_version: Option<u64>) -> Vec<&
+@@ -5,48 +5,21 @@ pub fn get(openssl_version: Option<u64>, libressl_version: Option<u64>) -> Vec<&
+     if let Some(libressl_version) = libressl_version {
+         cfgs.push("libressl");
+ 
+-        if libressl_version >= 0x2_05_01_00_0 {
+-            cfgs.push("libressl251");
+-        }
+-        if libressl_version >= 0x2_05_02_00_0 {
+-            cfgs.push("libressl252");
+-        }
+-        if libressl_version >= 0x2_06_01_00_0 {
+-            cfgs.push("libressl261");
+-        }
+-        if libressl_version >= 0x2_07_00_00_0 {
+-            cfgs.push("libressl270");
+-        }
+-        if libressl_version >= 0x2_07_01_00_0 {
+-            cfgs.push("libressl271");
+-        }
+-        if libressl_version >= 0x2_07_03_00_0 {
+-            cfgs.push("libressl273");
+-        }
+-        if libressl_version >= 0x2_08_00_00_0 {
+-            cfgs.push("libressl280");
+-        }
+-        if libressl_version >= 0x2_08_01_00_0 {
+-            cfgs.push("libressl281");
+-        }
+-        if libressl_version >= 0x2_09_01_00_0 {
+-            cfgs.push("libressl291");
+-        }
+-        if libressl_version >= 0x3_01_00_00_0 {
+-            cfgs.push("libressl310");
+-        }
+-        if libressl_version >= 0x3_02_01_00_0 {
+-            cfgs.push("libressl321");
+-        }
+-        if libressl_version >= 0x3_03_02_00_0 {
+-            cfgs.push("libressl332");
+-        }
+-        if libressl_version >= 0x3_04_00_00_0 {
+-            cfgs.push("libressl340");
+-        }
+-        if libressl_version >= 0x3_05_00_00_0 {
+-            cfgs.push("libressl350");
+-        }
++        cfgs.push("libressl251");
++        cfgs.push("libressl252");
++        cfgs.push("libressl261");
++        cfgs.push("libressl270");
++        cfgs.push("libressl271");
++        cfgs.push("libressl273");
++        cfgs.push("libressl280");
++        cfgs.push("libressl281");
++        cfgs.push("libressl291");
++        cfgs.push("libressl310");
++        cfgs.push("libressl321");
++        cfgs.push("libressl332");
++        cfgs.push("libressl340");
++        cfgs.push("libressl350");
++
+         if libressl_version >= 0x3_06_00_00_0 {
+             cfgs.push("libressl360");
+         }
+@@ -71,27 +44,14 @@ pub fn get(openssl_version: Option<u64>, libressl_version: Option<u64>) -> Vec<&
          if libressl_version >= 0x4_01_00_00_0 {
              cfgs.push("libressl410");
          }
@@ -11,15 +75,54 @@ index ca9970740..edfa67333 100644
 +        }
      } else {
          let openssl_version = openssl_version.unwrap();
++        cfgs.push("ossl101");
++        cfgs.push("ossl102");
  
+-        if openssl_version >= 0x3_04_00_00_0 {
+-            cfgs.push("ossl340");
+-        }
+-        if openssl_version >= 0x3_03_00_00_0 {
+-            cfgs.push("ossl330");
+-        }
+-        if openssl_version >= 0x3_02_00_00_0 {
+-            cfgs.push("ossl320");
+-        }
+-        if openssl_version >= 0x3_00_00_00_0 {
+-            cfgs.push("ossl300");
+-        }
+-        if openssl_version >= 0x1_00_01_00_0 {
+-            cfgs.push("ossl101");
+-        }
+-        if openssl_version >= 0x1_00_02_00_0 {
+-            cfgs.push("ossl102");
+-        }
+         if openssl_version >= 0x1_00_02_06_0 {
+             cfgs.push("ossl102f");
+         }
+@@ -122,6 +82,21 @@ pub fn get(openssl_version: Option<u64>, libressl_version: Option<u64>) -> Vec<&
+         if openssl_version >= 0x1_01_01_04_0 {
+             cfgs.push("ossl111d");
+         }
++        if openssl_version >= 0x3_00_00_00_0 {
++            cfgs.push("ossl300");
++        }
++        if openssl_version >= 0x3_02_00_00_0 {
++            cfgs.push("ossl320");
++        }
++        if openssl_version >= 0x3_03_00_00_0 {
++            cfgs.push("ossl330");
++        }
++        if openssl_version >= 0x3_04_00_00_0 {
++            cfgs.push("ossl340");
++        }
 +        if openssl_version >= 0x3_05_00_00_0 {
 +            cfgs.push("ossl350");
 +        }
-         if openssl_version >= 0x3_04_00_00_0 {
-             cfgs.push("ossl340");
-         }
+     }
+ 
+     cfgs
 diff --git a/build/expando.c b/build/expando.c
-index cebed1b70..038051639 100644
+index cebed1b..0380516 100644
 --- a/build/expando.c
 +++ b/build/expando.c
 @@ -111,6 +111,10 @@ RUST_CONF_OPENSSL_NO_SHA
@@ -34,7 +137,7 @@ index cebed1b70..038051639 100644
  RUST_CONF_OPENSSL_NO_SSL3_METHOD
  #endif
 diff --git a/build/find_normal.rs b/build/find_normal.rs
-index 1439e9ab3..a15ad3421 100644
+index 1439e9a..cad0afd 100644
 --- a/build/find_normal.rs
 +++ b/build/find_normal.rs
 @@ -38,7 +38,7 @@ fn resolve_with_wellknown_homebrew_location(dir: &str) -> Option<PathBuf> {
@@ -60,7 +163,23 @@ index 1439e9ab3..a15ad3421 100644
          return OsString::from("/usr");
      }
  
-@@ -196,7 +199,7 @@ https://github.com/sfackler/rust-openssl#windows
+@@ -122,7 +125,7 @@ Make sure you also have the development packages of openssl installed.
+ For example, `libssl-dev` on Ubuntu or `openssl-devel` on Fedora.
+ 
+ If you're in a situation where you think the directory *should* be found
+-automatically, please open a bug at https://github.com/sfackler/rust-openssl
++automatically, please open a bug at https://github.com/rust-openssl/rust-openssl
+ and include information about your system as well as this message.
+ 
+ $HOST = {}
+@@ -190,13 +193,13 @@ installation. If there isn't one installed then you can try the rust-openssl
+ README for more information about how to download precompiled binaries of
+ OpenSSL:
+ 
+-https://github.com/sfackler/rust-openssl#windows
++https://github.com/rust-openssl/rust-openssl#windows
+ 
+ ",
          );
      }
  
@@ -96,7 +215,7 @@ index 1439e9ab3..a15ad3421 100644
      process::exit(0);
  }
 diff --git a/build/main.rs b/build/main.rs
-index c4ac240e3..2ed5eb8d3 100644
+index ac98e08..ac7ef00 100644
 --- a/build/main.rs
 +++ b/build/main.rs
 @@ -27,11 +27,11 @@ enum Version {
@@ -148,11 +267,13 @@ index c4ac240e3..2ed5eb8d3 100644
          // The aws-lc-sys crate uses a link name that embeds
          // the version number of crate. Examples (crate-name => links name):
          //   * aws-lc-sys => aws_lc_0_26_0
-@@ -77,11 +75,22 @@ fn check_ssl_kind() {
+@@ -76,12 +74,23 @@ fn check_ssl_kind() {
+         // were to resolve to multiple versions for the same crate.
          //
          // Due to this we need to determine what version of the AWS-LC has been selected (fips or non-fips)
-         // and then need to parse out the pieces we are interested in ignoring the version componenet of the name.
+-        // and then need to parse out the pieces we are interested in ignoring the version componenet of the name.
 -        const AWS_LC_ENV_VAR_PREFIX: &str = "DEP_AWS_LC_";
++        // and then need to parse out the pieces we are interested in ignoring the version component of the name.
 +        let aws_lc_env_var_prefix: &'static str = if is_aws_lc_fips {
 +            "DEP_AWS_LC_FIPS_"
 +        } else {
@@ -241,6 +362,15 @@ index c4ac240e3..2ed5eb8d3 100644
      }
  
      // https://github.com/openssl/openssl/pull/15086
+@@ -284,7 +294,7 @@ fn postprocess(include_dirs: &[PathBuf]) -> Version {
+ /// version string of OpenSSL.
+ #[allow(clippy::unusual_byte_groupings)]
+ fn validate_headers(include_dirs: &[PathBuf]) -> Version {
+-    // This `*-sys` crate only works with OpenSSL 1.0.1, 1.0.2, 1.1.0, 1.1.1 and 3.0.0.
++    // This `*-sys` crate only works with OpenSSL 1.0.2, 1.1.0, 1.1.1 and 3.0.0.
+     // To correctly expose the right API from this crate, take a look at
+     // `opensslv.h` to see what version OpenSSL claims to be.
+     //
 @@ -305,7 +315,7 @@ fn validate_headers(include_dirs: &[PathBuf]) -> Version {
              panic!(
                  "
@@ -269,7 +399,7 @@ index c4ac240e3..2ed5eb8d3 100644
      }
      println!("cargo:conf={}", enabled.join(","));
  
-@@ -389,11 +398,11 @@ See rust-openssl documentation for more information:
+@@ -389,43 +398,16 @@ See rust-openssl documentation for more information:
      println!("cargo:rustc-cfg=openssl");
  
      for cfg in cfgs::get(openssl_version, libressl_version) {
@@ -283,12 +413,45 @@ index c4ac240e3..2ed5eb8d3 100644
  
          let major = (libressl_version >> 28) as u8;
          let minor = (libressl_version >> 20) as u8;
-@@ -439,16 +448,18 @@ See rust-openssl documentation for more information:
+         let fix = (libressl_version >> 12) as u8;
+         let (major, minor, fix) = match (major, minor, fix) {
+-            (2, 5, 0) => ('2', '5', '0'),
+-            (2, 5, 1) => ('2', '5', '1'),
+-            (2, 5, 2) => ('2', '5', '2'),
+-            (2, 5, _) => ('2', '5', 'x'),
+-            (2, 6, 0) => ('2', '6', '0'),
+-            (2, 6, 1) => ('2', '6', '1'),
+-            (2, 6, 2) => ('2', '6', '2'),
+-            (2, 6, _) => ('2', '6', 'x'),
+-            (2, 7, _) => ('2', '7', 'x'),
+-            (2, 8, 0) => ('2', '8', '0'),
+-            (2, 8, 1) => ('2', '8', '1'),
+-            (2, 8, _) => ('2', '8', 'x'),
+-            (2, 9, 0) => ('2', '9', '0'),
+-            (2, 9, _) => ('2', '9', 'x'),
+-            (3, 0, 0) => ('3', '0', '0'),
+-            (3, 0, 1) => ('3', '0', '1'),
+-            (3, 0, _) => ('3', '0', 'x'),
+-            (3, 1, 0) => ('3', '1', '0'),
+-            (3, 1, _) => ('3', '1', 'x'),
+-            (3, 2, 0) => ('3', '2', '0'),
+-            (3, 2, 1) => ('3', '2', '1'),
+-            (3, 2, _) => ('3', '2', 'x'),
+-            (3, 3, 0) => ('3', '3', '0'),
+-            (3, 3, 1) => ('3', '3', '1'),
+-            (3, 3, _) => ('3', '3', 'x'),
+-            (3, 4, 0) => ('3', '4', '0'),
+-            (3, 4, _) => ('3', '4', 'x'),
+             (3, 5, _) => ('3', '5', 'x'),
+             (3, 6, 0) => ('3', '6', '0'),
+             (3, 6, _) => ('3', '6', 'x'),
+@@ -439,16 +421,19 @@ See rust-openssl documentation for more information:
              (3, 9, _) => ('3', '9', 'x'),
              (4, 0, 0) => ('4', '0', '0'),
              (4, 0, _) => ('4', '0', 'x'),
 +            (4, 1, 0) => ('4', '1', '0'),
 +            (4, 1, _) => ('4', '1', 'x'),
++            (4, 2, _) => ('4', '2', 'x'),
              _ => version_error(),
          };
  
@@ -304,16 +467,28 @@ index c4ac240e3..2ed5eb8d3 100644
  
          if openssl_version >= 0x4_00_00_00_0 {
              version_error()
-@@ -481,7 +492,7 @@ fn version_error() -> ! {
+@@ -467,9 +452,6 @@ See rust-openssl documentation for more information:
+         } else if openssl_version >= 0x1_00_02_00_0 {
+             println!("cargo:version=102");
+             Version::Openssl10x
+-        } else if openssl_version >= 0x1_00_01_00_0 {
+-            println!("cargo:version=101");
+-            Version::Openssl10x
+         } else {
+             version_error()
+         }
+@@ -480,8 +462,8 @@ fn version_error() -> ! {
+     panic!(
          "
  
- This crate is only compatible with OpenSSL (version 1.0.1 through 1.1.1, or 3), or LibreSSL 2.5
+-This crate is only compatible with OpenSSL (version 1.0.1 through 1.1.1, or 3), or LibreSSL 2.5
 -through 4.0.x, but a different version of OpenSSL was found. The build is now aborting
-+through 4.1.x, but a different version of OpenSSL was found. The build is now aborting
++This crate is only compatible with OpenSSL (version 1.0.2 through 1.1.1, or 3), or LibreSSL 3.5
++through 4.2.x, but a different version of OpenSSL was found. The build is now aborting
  due to this version mismatch.
  
  "
-@@ -502,7 +513,7 @@ fn parse_version(version: &str) -> u64 {
+@@ -502,7 +484,7 @@ fn parse_version(version: &str) -> u64 {
  
  // parses a string that looks like 3_0_0
  fn parse_new_version(version: &str) -> u64 {
@@ -322,7 +497,7 @@ index c4ac240e3..2ed5eb8d3 100644
      let mut it = version.split('_');
      let major = it.next().unwrap().parse::<u64>().unwrap();
      let minor = it.next().unwrap().parse::<u64>().unwrap();
-@@ -539,20 +550,19 @@ fn determine_mode(libdirs: &[PathBuf], libs: &[&str]) -> &'static str {
+@@ -539,20 +521,19 @@ fn determine_mode(libdirs: &[PathBuf], libs: &[&str]) -> &'static str {
      }
      let can_static = libs
          .iter()
@@ -350,7 +525,7 @@ index c4ac240e3..2ed5eb8d3 100644
          }
          (true, true) => {}
 diff --git a/build/run_bindgen.rs b/build/run_bindgen.rs
-index cc0efd8b5..3a8f5dea5 100644
+index cc0efd8..edba9ce 100644
 --- a/build/run_bindgen.rs
 +++ b/build/run_bindgen.rs
 @@ -1,5 +1,5 @@
@@ -360,7 +535,12 @@ index cc0efd8b5..3a8f5dea5 100644
  #[cfg(feature = "bindgen")]
  use bindgen::{MacroTypeVariation, RustTarget};
  use std::io::Write;
-@@ -45,7 +45,7 @@ const INCLUDES: &str = "
+@@ -41,11 +41,11 @@ const INCLUDES: &str = "
+ #include <openssl/srtp.h>
+ #endif
+ 
+-#if !(defined(LIBRESSL_VERSION_NUMBER) || defined(OPENSSL_IS_BORINGSSL) || defined(OPENSSL_IS_AWSLC))
++#if !(defined(OPENSSL_IS_BORINGSSL) || defined(OPENSSL_IS_AWSLC))
  #include <openssl/cms.h>
  #endif
  
@@ -381,7 +561,18 @@ index cc0efd8b5..3a8f5dea5 100644
  #endif
  
  #if OPENSSL_VERSION_NUMBER >= 0x30200000
-@@ -80,7 +84,7 @@ pub fn run(include_dirs: &[PathBuf]) {
+@@ -69,6 +73,10 @@ const INCLUDES: &str = "
+ #include <openssl/poly1305.h>
+ #endif
+ 
++#if defined(OPENSSL_IS_BORINGSSL)
++#include <openssl/mlkem.h>
++#endif
++
+ #if OPENSSL_VERSION_NUMBER >= 0x30200000
+ #include <openssl/thread.h>
+ #endif
+@@ -80,7 +88,7 @@ pub fn run(include_dirs: &[PathBuf]) {
  
      let mut builder = bindgen::builder()
          .parse_callbacks(Box::new(OpensslCallbacks))
@@ -390,7 +581,7 @@ index cc0efd8b5..3a8f5dea5 100644
          .ctypes_prefix("::libc")
          .raw_line("use libc::*;")
          .raw_line("#[cfg(windows)] use std::os::windows::raw::HANDLE;")
-@@ -134,7 +138,7 @@ pub fn run_boringssl(include_dirs: &[PathBuf]) {
+@@ -134,7 +142,7 @@ pub fn run_boringssl(include_dirs: &[PathBuf]) {
          .expect("Failed to write contents to boring_static_wrapper.h");
  
      let mut builder = bindgen::builder()
@@ -399,7 +590,7 @@ index cc0efd8b5..3a8f5dea5 100644
          .ctypes_prefix("::libc")
          .raw_line("use libc::*;")
          .derive_default(false)
-@@ -186,9 +190,7 @@ pub fn run_boringssl(include_dirs: &[PathBuf]) {
+@@ -186,9 +194,7 @@ pub fn run_boringssl(include_dirs: &[PathBuf]) {
      bindgen_cmd
          .arg("-o")
          .arg(out_dir.join("bindgen.rs"))
@@ -410,7 +601,7 @@ index cc0efd8b5..3a8f5dea5 100644
          .arg("--ctypes-prefix=::libc")
          .arg("--raw-line=use libc::*;")
          .arg("--no-derive-default")
-@@ -257,7 +259,7 @@ pub fn run_awslc(include_dirs: &[PathBuf], symbol_prefix: Option<String>) {
+@@ -257,7 +263,7 @@ pub fn run_awslc(include_dirs: &[PathBuf], symbol_prefix: Option<String>) {
          .expect("Failed to write contents to awslc_static_wrapper.h");
  
      let mut builder = bindgen::builder()
@@ -419,7 +610,7 @@ index cc0efd8b5..3a8f5dea5 100644
          .ctypes_prefix("::libc")
          .raw_line("use libc::*;")
          .derive_default(false)
-@@ -312,9 +314,7 @@ pub fn run_awslc(include_dirs: &[PathBuf], symbol_prefix: Option<String>) {
+@@ -312,9 +318,7 @@ pub fn run_awslc(include_dirs: &[PathBuf], symbol_prefix: Option<String>) {
      bindgen_cmd
          .arg("-o")
          .arg(out_dir.join("bindgen.rs"))
@@ -430,7 +621,7 @@ index cc0efd8b5..3a8f5dea5 100644
          .arg("--ctypes-prefix=::libc")
          .arg("--raw-line=use libc::*;")
          .arg("--no-derive-default")
-@@ -354,8 +354,8 @@ impl ParseCallbacks for OpensslCallbacks {
+@@ -354,8 +358,8 @@ impl ParseCallbacks for OpensslCallbacks {
          MacroParsingBehavior::Ignore
      }
  
@@ -441,7 +632,7 @@ index cc0efd8b5..3a8f5dea5 100644
              // Our original definitions of these are wrong, so rename to avoid breakage
              "CRYPTO_EX_new"
              | "CRYPTO_EX_dup"
-@@ -373,7 +373,9 @@ impl ParseCallbacks for OpensslCallbacks {
+@@ -373,7 +377,9 @@ impl ParseCallbacks for OpensslCallbacks {
              | "SSL_CTX_set_tmp_ecdh_callback"
              | "SSL_set_tmp_ecdh_callback"
              | "SSL_CTX_callback_ctrl"
@@ -453,7 +644,7 @@ index cc0efd8b5..3a8f5dea5 100644
          }
      }
 diff --git a/src/aes.rs b/src/aes.rs
-index ade6e842f..7fcb838ce 100644
+index ade6e84..7fcb838 100644
 --- a/src/aes.rs
 +++ b/src/aes.rs
 @@ -1,7 +1,10 @@
@@ -467,9 +658,109 @@ index ade6e842f..7fcb838ce 100644
 +#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
  pub const AES_MAXNR: c_int = 14;
  pub const AES_BLOCK_SIZE: c_int = 16;
+diff --git a/src/bio.rs b/src/bio.rs
+index f6ec71d..1f4fcbc 100644
+--- a/src/bio.rs
++++ b/src/bio.rs
+@@ -34,37 +34,37 @@ pub unsafe fn BIO_get_mem_data(b: *mut BIO, pp: *mut *mut c_char) -> c_long {
+ 
+ extern "C" {
+     #[deprecated(note = "use BIO_meth_set_write__fixed_rust instead")]
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_set_write(
+         biom: *mut BIO_METHOD,
+         write: unsafe extern "C" fn(*mut BIO, *const c_char, c_int) -> c_int,
+     ) -> c_int;
+     #[deprecated(note = "use BIO_meth_set_read__fixed_rust instead")]
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_set_read(
+         biom: *mut BIO_METHOD,
+         read: unsafe extern "C" fn(*mut BIO, *mut c_char, c_int) -> c_int,
+     ) -> c_int;
+     #[deprecated(note = "use BIO_meth_set_puts__fixed_rust instead")]
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_set_puts(
+         biom: *mut BIO_METHOD,
+         read: unsafe extern "C" fn(*mut BIO, *const c_char) -> c_int,
+     ) -> c_int;
+     #[deprecated(note = "use BIO_meth_set_ctrl__fixed_rust instead")]
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_set_ctrl(
+         biom: *mut BIO_METHOD,
+         read: unsafe extern "C" fn(*mut BIO, c_int, c_long, *mut c_void) -> c_long,
+     ) -> c_int;
+     #[deprecated(note = "use BIO_meth_set_create__fixed_rust instead")]
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_set_create(
+         biom: *mut BIO_METHOD,
+         create: unsafe extern "C" fn(*mut BIO) -> c_int,
+     ) -> c_int;
+     #[deprecated(note = "use BIO_meth_set_destroy__fixed_rust instead")]
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_set_destroy(
+         biom: *mut BIO_METHOD,
+         destroy: unsafe extern "C" fn(*mut BIO) -> c_int,
+diff --git a/src/cms.rs b/src/cms.rs
+index f008adb..050e88d 100644
+--- a/src/cms.rs
++++ b/src/cms.rs
+@@ -1,46 +1,25 @@
+ use libc::*;
+ 
+-#[cfg(ossl101)]
+ pub const CMS_TEXT: c_uint = 0x1;
+-#[cfg(ossl101)]
+ pub const CMS_NOCERTS: c_uint = 0x2;
+-#[cfg(ossl101)]
+ pub const CMS_NO_CONTENT_VERIFY: c_uint = 0x4;
+-#[cfg(ossl101)]
+ pub const CMS_NO_ATTR_VERIFY: c_uint = 0x8;
+-#[cfg(ossl101)]
+ pub const CMS_NOSIGS: c_uint = 0x4 | 0x8;
+-#[cfg(ossl101)]
+ pub const CMS_NOINTERN: c_uint = 0x10;
+-#[cfg(ossl101)]
+ pub const CMS_NO_SIGNER_CERT_VERIFY: c_uint = 0x20;
+-#[cfg(ossl101)]
+ pub const CMS_NOVERIFY: c_uint = 0x20;
+-#[cfg(ossl101)]
+ pub const CMS_DETACHED: c_uint = 0x40;
+-#[cfg(ossl101)]
+ pub const CMS_BINARY: c_uint = 0x80;
+-#[cfg(ossl101)]
+ pub const CMS_NOATTR: c_uint = 0x100;
+-#[cfg(ossl101)]
+ pub const CMS_NOSMIMECAP: c_uint = 0x200;
+-#[cfg(ossl101)]
+ pub const CMS_NOOLDMIMETYPE: c_uint = 0x400;
+-#[cfg(ossl101)]
+ pub const CMS_CRLFEOL: c_uint = 0x800;
+-#[cfg(ossl101)]
+ pub const CMS_STREAM: c_uint = 0x1000;
+-#[cfg(ossl101)]
+ pub const CMS_NOCRL: c_uint = 0x2000;
+-#[cfg(ossl101)]
+ pub const CMS_PARTIAL: c_uint = 0x4000;
+-#[cfg(ossl101)]
+ pub const CMS_REUSE_DIGEST: c_uint = 0x8000;
+-#[cfg(ossl101)]
+ pub const CMS_USE_KEYID: c_uint = 0x10000;
+-#[cfg(ossl101)]
+ pub const CMS_DEBUG_DECRYPT: c_uint = 0x20000;
+-#[cfg(ossl102)]
+ pub const CMS_KEY_PARAM: c_uint = 0x40000;
+-#[cfg(ossl110)]
++#[cfg(any(ossl110, libressl))]
+ pub const CMS_ASCIICRLF: c_uint = 0x80000;
 diff --git a/src/core_dispatch.rs b/src/core_dispatch.rs
 new file mode 100644
-index 000000000..446dfc96e
+index 0000000..446dfc9
 --- /dev/null
 +++ b/src/core_dispatch.rs
 @@ -0,0 +1,11 @@
@@ -485,9 +776,18 @@ index 000000000..446dfc96e
 +pub const OSSL_KEYMGMT_SELECT_ALL_PARAMETERS: c_int =
 +    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
 diff --git a/src/crypto.rs b/src/crypto.rs
-index 7eff6a847..6cfd7818d 100644
+index 7eff6a8..a927e75 100644
 --- a/src/crypto.rs
 +++ b/src/crypto.rs
+@@ -116,7 +116,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl271))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub const OPENSSL_VERSION: c_int = 0;
+         pub const OPENSSL_CFLAGS: c_int = 1;
+         pub const OPENSSL_BUILT_ON: c_int = 2;
 @@ -131,4 +131,5 @@ cfg_if! {
      }
  }
@@ -496,7 +796,7 @@ index 7eff6a847..6cfd7818d 100644
  pub const CRYPTO_LOCK: c_int = 1;
 diff --git a/src/dh.rs b/src/dh.rs
 new file mode 100644
-index 000000000..05ae66ba1
+index 0000000..05ae66b
 --- /dev/null
 +++ b/src/dh.rs
 @@ -0,0 +1,32 @@
@@ -534,7 +834,7 @@ index 000000000..05ae66ba1
 +pub const EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR: c_int = EVP_PKEY_ALG_CTRL + 2;
 diff --git a/src/dsa.rs b/src/dsa.rs
 new file mode 100644
-index 000000000..cd5abfec8
+index 0000000..cd5abfe
 --- /dev/null
 +++ b/src/dsa.rs
 @@ -0,0 +1,21 @@
@@ -560,7 +860,7 @@ index 000000000..cd5abfec8
 +    }
 +}
 diff --git a/src/ec.rs b/src/ec.rs
-index 995a84ff6..61fa0b134 100644
+index 995a84f..61fa0b1 100644
 --- a/src/ec.rs
 +++ b/src/ec.rs
 @@ -5,6 +5,20 @@ use super::*;
@@ -591,9 +891,18 @@ index 995a84ff6..61fa0b134 100644
 +
 +pub const EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID: c_int = EVP_PKEY_ALG_CTRL + 1;
 diff --git a/src/evp.rs b/src/evp.rs
-index 5fad4b977..4d3fb5768 100644
+index 5fad4b9..e39f144 100644
 --- a/src/evp.rs
 +++ b/src/evp.rs
+@@ -7,7 +7,7 @@ pub const PKCS5_SALT_LEN: c_int = 8;
+ pub const PKCS12_DEFAULT_ITER: c_int = 2048;
+ 
+ pub const EVP_PKEY_RSA: c_int = NID_rsaEncryption;
+-#[cfg(any(ossl111, libressl310, boringssl, awslc))]
++#[cfg(any(ossl111, libressl, boringssl, awslc))]
+ pub const EVP_PKEY_RSA_PSS: c_int = NID_rsassaPss;
+ pub const EVP_PKEY_DSA: c_int = NID_dsa;
+ pub const EVP_PKEY_DH: c_int = NID_dhKeyAgreement;
 @@ -38,6 +38,15 @@ pub const EVP_CTRL_GCM_SET_IVLEN: c_int = 0x9;
  pub const EVP_CTRL_GCM_GET_TAG: c_int = 0x10;
  pub const EVP_CTRL_GCM_SET_TAG: c_int = 0x11;
@@ -642,7 +951,7 @@ index 5fad4b977..4d3fb5768 100644
      EVP_PKEY_assign(pkey, EVP_PKEY_EC, ec_key as *mut c_void)
  }
 diff --git a/src/handwritten/aes.rs b/src/handwritten/aes.rs
-index ba249362c..fea137bb3 100644
+index ba24936..fea137b 100644
 --- a/src/handwritten/aes.rs
 +++ b/src/handwritten/aes.rs
 @@ -1,6 +1,7 @@
@@ -661,8 +970,182 @@ index ba249362c..fea137bb3 100644
  extern "C" {
      pub fn AES_set_encrypt_key(userKey: *const c_uchar, bits: c_int, key: *mut AES_KEY) -> c_int;
      pub fn AES_set_decrypt_key(userKey: *const c_uchar, bits: c_int, key: *mut AES_KEY) -> c_int;
+diff --git a/src/handwritten/asn1.rs b/src/handwritten/asn1.rs
+index 16ffccc..d0a92a7 100644
+--- a/src/handwritten/asn1.rs
++++ b/src/handwritten/asn1.rs
+@@ -47,9 +47,9 @@ pub union ASN1_TYPE_value {
+ 
+ extern "C" {
+     pub fn ASN1_STRING_type_new(ty: c_int) -> *mut ASN1_STRING;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn ASN1_STRING_get0_data(x: *const ASN1_STRING) -> *const c_uchar;
+-    #[cfg(any(all(ossl101, not(ossl110)), libressl))]
++    #[cfg(any(all(ossl102, not(ossl110)), libressl))]
+     pub fn ASN1_STRING_data(x: *mut ASN1_STRING) -> *mut c_uchar;
+     pub fn ASN1_STRING_new() -> *mut ASN1_STRING;
+     pub fn ASN1_OCTET_STRING_new() -> *mut ASN1_OCTET_STRING;
+@@ -68,7 +68,6 @@ extern "C" {
+     pub fn ASN1_GENERALIZEDTIME_free(tm: *mut ASN1_GENERALIZEDTIME);
+     pub fn ASN1_GENERALIZEDTIME_print(b: *mut BIO, tm: *const ASN1_GENERALIZEDTIME) -> c_int;
+     pub fn ASN1_TIME_new() -> *mut ASN1_TIME;
+-    #[cfg(ossl102)]
+     pub fn ASN1_TIME_diff(
+         pday: *mut c_int,
+         psec: *mut c_int,
+@@ -107,9 +106,9 @@ extern "C" {
+ 
+ const_ptr_api! {
+     extern "C" {
+-        pub fn ASN1_STRING_to_UTF8(out: *mut *mut c_uchar, s: #[const_ptr_if(any(ossl110, libressl280))] ASN1_STRING) -> c_int;
+-        pub fn ASN1_STRING_type(x: #[const_ptr_if(any(ossl110, libressl280))]  ASN1_STRING) -> c_int;
+-        pub fn ASN1_generate_v3(str: #[const_ptr_if(any(ossl110, libressl280))] c_char, cnf: *mut X509V3_CTX) -> *mut ASN1_TYPE;
++        pub fn ASN1_STRING_to_UTF8(out: *mut *mut c_uchar, s: #[const_ptr_if(any(ossl110, libressl))] ASN1_STRING) -> c_int;
++        pub fn ASN1_STRING_type(x: #[const_ptr_if(any(ossl110, libressl))]  ASN1_STRING) -> c_int;
++        pub fn ASN1_generate_v3(str: #[const_ptr_if(any(ossl110, libressl))] c_char, cnf: *mut X509V3_CTX) -> *mut ASN1_TYPE;
+         pub fn i2d_ASN1_TYPE(a: #[const_ptr_if(ossl300)] ASN1_TYPE, pp: *mut *mut c_uchar) -> c_int;
+     }
+ }
+diff --git a/src/handwritten/bio.rs b/src/handwritten/bio.rs
+index 9461d71..e027539 100644
+--- a/src/handwritten/bio.rs
++++ b/src/handwritten/bio.rs
+@@ -10,7 +10,7 @@ pub type bio_info_cb =
+     Option<unsafe extern "C" fn(*mut BIO, c_int, *const c_char, c_int, c_long, c_long)>;
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum BIO_METHOD {}
+     } else {
+         #[repr(C)]
+@@ -31,29 +31,29 @@ cfg_if! {
+ 
+ const_ptr_api! {
+     extern "C" {
+-        pub fn BIO_s_file() -> #[const_ptr_if(any(ossl110, libressl280))] BIO_METHOD;
+-        pub fn BIO_new(type_: #[const_ptr_if(any(ossl110, libressl280))] BIO_METHOD) -> *mut BIO;
++        pub fn BIO_s_file() -> #[const_ptr_if(any(ossl110, libressl))] BIO_METHOD;
++        pub fn BIO_new(type_: #[const_ptr_if(any(ossl110, libressl))] BIO_METHOD) -> *mut BIO;
+     }
+ }
+ extern "C" {
+     #[cfg(not(osslconf = "OPENSSL_NO_STDIO"))]
+     pub fn BIO_new_fp(stream: *mut FILE, close_flag: c_int) -> *mut BIO;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_set_data(a: *mut BIO, data: *mut c_void);
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_get_data(a: *mut BIO) -> *mut c_void;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_set_init(a: *mut BIO, init: c_int);
+     pub fn BIO_write(b: *mut BIO, buf: *const c_void, len: c_int) -> c_int;
+     pub fn BIO_read(b: *mut BIO, buf: *mut c_void, len: c_int) -> c_int;
+     pub fn BIO_ctrl(b: *mut BIO, cmd: c_int, larg: c_long, parg: *mut c_void) -> c_long;
+     pub fn BIO_free_all(b: *mut BIO);
++    pub fn BIO_new_mem_buf(buf: *const c_void, len: c_int) -> *mut BIO;
+ }
+ 
+ const_ptr_api! {
+     extern "C" {
+-        pub fn BIO_s_mem() -> #[const_ptr_if(any(ossl110, libressl280))] BIO_METHOD;
+-        pub fn BIO_new_mem_buf(buf: #[const_ptr_if(any(ossl102, libressl280))] c_void, len: c_int) -> *mut BIO;
++        pub fn BIO_s_mem() -> #[const_ptr_if(any(ossl110, libressl))] BIO_METHOD;
+     }
+ }
+ 
+@@ -61,45 +61,45 @@ extern "C" {
+     #[cfg(not(osslconf = "OPENSSL_NO_SOCK"))]
+     pub fn BIO_new_socket(sock: c_int, close_flag: c_int) -> *mut BIO;
+ 
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_new(type_: c_int, name: *const c_char) -> *mut BIO_METHOD;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BIO_meth_free(biom: *mut BIO_METHOD);
+ }
+ 
+ #[allow(clashing_extern_declarations)]
+ extern "C" {
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     #[link_name = "BIO_meth_set_write"]
+     pub fn BIO_meth_set_write__fixed_rust(
+         biom: *mut BIO_METHOD,
+         write: Option<unsafe extern "C" fn(*mut BIO, *const c_char, c_int) -> c_int>,
+     ) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     #[link_name = "BIO_meth_set_read"]
+     pub fn BIO_meth_set_read__fixed_rust(
+         biom: *mut BIO_METHOD,
+         read: Option<unsafe extern "C" fn(*mut BIO, *mut c_char, c_int) -> c_int>,
+     ) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     #[link_name = "BIO_meth_set_puts"]
+     pub fn BIO_meth_set_puts__fixed_rust(
+         biom: *mut BIO_METHOD,
+         read: Option<unsafe extern "C" fn(*mut BIO, *const c_char) -> c_int>,
+     ) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     #[link_name = "BIO_meth_set_ctrl"]
+     pub fn BIO_meth_set_ctrl__fixed_rust(
+         biom: *mut BIO_METHOD,
+         read: Option<unsafe extern "C" fn(*mut BIO, c_int, c_long, *mut c_void) -> c_long>,
+     ) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     #[link_name = "BIO_meth_set_create"]
+     pub fn BIO_meth_set_create__fixed_rust(
+         biom: *mut BIO_METHOD,
+         create: Option<unsafe extern "C" fn(*mut BIO) -> c_int>,
+     ) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     #[link_name = "BIO_meth_set_destroy"]
+     pub fn BIO_meth_set_destroy__fixed_rust(
+         biom: *mut BIO_METHOD,
+diff --git a/src/handwritten/bn.rs b/src/handwritten/bn.rs
+index fb55f6b..0d45bac 100644
+--- a/src/handwritten/bn.rs
++++ b/src/handwritten/bn.rs
+@@ -23,16 +23,16 @@ extern "C" {
+     pub fn BN_clear_free(bn: *mut BIGNUM);
+     pub fn BN_bin2bn(s: *const u8, size: c_int, ret: *mut BIGNUM) -> *mut BIGNUM;
+     pub fn BN_bn2bin(a: *const BIGNUM, to: *mut u8) -> c_int;
+-    #[cfg(any(ossl110, libressl340))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BN_bn2binpad(a: *const BIGNUM, to: *mut u8, tolen: c_int) -> c_int;
+     pub fn BN_sub(r: *mut BIGNUM, a: *const BIGNUM, b: *const BIGNUM) -> c_int;
+     pub fn BN_add(r: *mut BIGNUM, a: *const BIGNUM, b: *const BIGNUM) -> c_int;
+     pub fn BN_mul(r: *mut BIGNUM, a: *const BIGNUM, b: *const BIGNUM, ctx: *mut BN_CTX) -> c_int;
+     pub fn BN_sqr(r: *mut BIGNUM, a: *const BIGNUM, ctx: *mut BN_CTX) -> c_int;
+     pub fn BN_set_negative(bn: *mut BIGNUM, n: c_int);
+-    #[cfg(any(ossl110, libressl350))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BN_is_negative(b: *const BIGNUM) -> c_int;
+-    #[cfg(any(ossl110, libressl350))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn BN_is_odd(b: *const BIGNUM) -> c_int;
+ 
+     pub fn BN_div(
+@@ -150,7 +150,7 @@ extern "C" {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn BN_get_rfc2409_prime_768(bn: *mut BIGNUM) -> *mut BIGNUM;
+             pub fn BN_get_rfc2409_prime_1024(bn: *mut BIGNUM) -> *mut BIGNUM;
 diff --git a/src/handwritten/cmac.rs b/src/handwritten/cmac.rs
-index e44094d21..10a23260f 100644
+index e44094d..10a2326 100644
 --- a/src/handwritten/cmac.rs
 +++ b/src/handwritten/cmac.rs
 @@ -2,6 +2,7 @@ use libc::*;
@@ -673,9 +1156,92 @@ index e44094d21..10a23260f 100644
  extern "C" {
      pub fn CMAC_CTX_new() -> *mut CMAC_CTX;
      pub fn CMAC_CTX_free(ctx: *mut CMAC_CTX);
+diff --git a/src/handwritten/cms.rs b/src/handwritten/cms.rs
+index a13ea42..2fc58c2 100644
+--- a/src/handwritten/cms.rs
++++ b/src/handwritten/cms.rs
+@@ -4,29 +4,24 @@ use libc::*;
+ pub enum CMS_ContentInfo {}
+ 
+ extern "C" {
+-    #[cfg(ossl101)]
+     pub fn CMS_ContentInfo_free(cms: *mut CMS_ContentInfo);
+ }
+ 
+ const_ptr_api! {
+     extern "C" {
+-        #[cfg(ossl101)]
+         pub fn i2d_CMS_ContentInfo(a: #[const_ptr_if(ossl300)] CMS_ContentInfo, pp: *mut *mut c_uchar) -> c_int;
+     }
+ }
+ 
+ extern "C" {
+-    #[cfg(ossl101)]
+     pub fn d2i_CMS_ContentInfo(
+         a: *mut *mut CMS_ContentInfo,
+         pp: *mut *const c_uchar,
+         length: c_long,
+     ) -> *mut CMS_ContentInfo;
+ 
+-    #[cfg(ossl101)]
+     pub fn SMIME_read_CMS(bio: *mut BIO, bcont: *mut *mut BIO) -> *mut CMS_ContentInfo;
+ 
+-    #[cfg(ossl101)]
+     pub fn CMS_sign(
+         signcert: *mut X509,
+         pkey: *mut EVP_PKEY,
+@@ -35,7 +30,6 @@ extern "C" {
+         flags: c_uint,
+     ) -> *mut CMS_ContentInfo;
+ 
+-    #[cfg(ossl101)]
+     pub fn CMS_verify(
+         cms: *mut CMS_ContentInfo,
+         certs: *mut stack_st_X509,
+@@ -45,7 +39,6 @@ extern "C" {
+         flags: c_uint,
+     ) -> c_int;
+ 
+-    #[cfg(ossl101)]
+     pub fn CMS_encrypt(
+         certs: *mut stack_st_X509,
+         data: *mut BIO,
+@@ -53,7 +46,6 @@ extern "C" {
+         flags: c_uint,
+     ) -> *mut CMS_ContentInfo;
+ 
+-    #[cfg(ossl101)]
+     pub fn CMS_decrypt(
+         cms: *mut CMS_ContentInfo,
+         pkey: *mut EVP_PKEY,
+diff --git a/src/handwritten/crypto.rs b/src/handwritten/crypto.rs
+index 0b3f24a..49cc88c 100644
+--- a/src/handwritten/crypto.rs
++++ b/src/handwritten/crypto.rs
+@@ -4,7 +4,7 @@ use libc::*;
+ stack!(stack_st_void);
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl271))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn OpenSSL_version_num() -> c_ulong;
+             pub fn OpenSSL_version(key: c_int) -> *const c_char;
+@@ -71,9 +71,9 @@ cfg_if! {
+ }
+ 
+ extern "C" {
+-    #[cfg(all(ossl101, not(ossl300)))]
++    #[cfg(all(ossl102, not(ossl300)))]
+     pub fn FIPS_mode() -> c_int;
+-    #[cfg(all(ossl101, not(ossl300)))]
++    #[cfg(all(ossl102, not(ossl300)))]
+     pub fn FIPS_mode_set(onoff: c_int) -> c_int;
+ 
+     pub fn CRYPTO_memcmp(a: *const c_void, b: *const c_void, len: size_t) -> c_int;
 diff --git a/src/handwritten/decoder.rs b/src/handwritten/decoder.rs
 new file mode 100644
-index 000000000..4b684d37d
+index 0000000..4b684d3
 --- /dev/null
 +++ b/src/handwritten/decoder.rs
 @@ -0,0 +1,52 @@
@@ -732,7 +1298,7 @@ index 000000000..4b684d37d
 +    ) -> c_int;
 +}
 diff --git a/src/handwritten/dh.rs b/src/handwritten/dh.rs
-index c4671c969..38098876e 100644
+index c4671c9..4686355 100644
 --- a/src/handwritten/dh.rs
 +++ b/src/handwritten/dh.rs
 @@ -1,5 +1,12 @@
@@ -748,11 +1314,35 @@ index c4671c969..38098876e 100644
  extern "C" {
      pub fn DH_new() -> *mut DH;
      pub fn DH_free(dh: *mut DH);
+@@ -34,9 +41,9 @@ extern "C" {
+     #[cfg(ossl102)]
+     pub fn DH_get_2048_256() -> *mut DH;
+ 
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DH_set0_pqg(dh: *mut DH, p: *mut BIGNUM, q: *mut BIGNUM, g: *mut BIGNUM) -> c_int;
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DH_get0_pqg(
+         dh: *const DH,
+         p: *mut *const BIGNUM,
+@@ -44,9 +51,9 @@ extern "C" {
+         g: *mut *const BIGNUM,
+     );
+ 
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DH_set0_key(dh: *mut DH, pub_key: *mut BIGNUM, priv_key: *mut BIGNUM) -> c_int;
+ 
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DH_get0_key(dh: *const DH, pub_key: *mut *const BIGNUM, priv_key: *mut *const BIGNUM);
+ }
 diff --git a/src/handwritten/dsa.rs b/src/handwritten/dsa.rs
-index be25f23b6..a6ceb0461 100644
+index be25f23..ce12d6b 100644
 --- a/src/handwritten/dsa.rs
 +++ b/src/handwritten/dsa.rs
-@@ -2,6 +2,11 @@ use libc::*;
+@@ -2,8 +2,13 @@ use libc::*;
  
  use super::super::*;
  
@@ -762,8 +1352,11 @@ index be25f23b6..a6ceb0461 100644
 +}
 +
  cfg_if! {
-     if #[cfg(any(ossl110, libressl280))] {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
          pub enum DSA_SIG {}
+     } else {
+       #[repr(C)]
 @@ -14,6 +19,7 @@ cfg_if! {
      }
  }
@@ -772,9 +1365,26 @@ index be25f23b6..a6ceb0461 100644
  extern "C" {
      pub fn DSA_new() -> *mut DSA;
      pub fn DSA_free(dsa: *mut DSA);
-@@ -67,6 +73,9 @@ extern "C" {
+@@ -54,19 +60,22 @@ extern "C" {
+     pub fn i2d_DSAPublicKey(a: *const DSA, pp: *mut *mut c_uchar) -> c_int;
+     pub fn i2d_DSAPrivateKey(a: *const DSA, pp: *mut *mut c_uchar) -> c_int;
+ 
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DSA_get0_pqg(
+         d: *const DSA,
+         p: *mut *const BIGNUM,
+         q: *mut *const BIGNUM,
+         q: *mut *const BIGNUM,
+     );
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DSA_set0_pqg(d: *mut DSA, p: *mut BIGNUM, q: *mut BIGNUM, q: *mut BIGNUM) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
      pub fn DSA_get0_key(d: *const DSA, pub_key: *mut *const BIGNUM, priv_key: *mut *const BIGNUM);
-     #[cfg(any(ossl110, libressl273))]
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
      pub fn DSA_set0_key(d: *mut DSA, pub_key: *mut BIGNUM, priv_key: *mut BIGNUM) -> c_int;
 +}
 +
@@ -782,8 +1392,20 @@ index be25f23b6..a6ceb0461 100644
      pub fn d2i_DSA_SIG(
          sig: *mut *mut DSA_SIG,
          pp: *mut *const c_uchar,
+@@ -77,9 +86,9 @@ extern "C" {
+     pub fn DSA_SIG_new() -> *mut DSA_SIG;
+     pub fn DSA_SIG_free(sig: *mut DSA_SIG);
+ 
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DSA_SIG_get0(sig: *const DSA_SIG, pr: *mut *const BIGNUM, ps: *mut *const BIGNUM);
+ 
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn DSA_SIG_set0(sig: *mut DSA_SIG, pr: *mut BIGNUM, ps: *mut BIGNUM) -> c_int;
+ }
 diff --git a/src/handwritten/ec.rs b/src/handwritten/ec.rs
-index 849251000..6f717932b 100644
+index 8492510..7d02086 100644
 --- a/src/handwritten/ec.rs
 +++ b/src/handwritten/ec.rs
 @@ -1,6 +1,11 @@
@@ -821,7 +1443,7 @@ index 849251000..6f717932b 100644
      pub fn EC_GROUP_free(group: *mut EC_GROUP);
  
      pub fn EC_GROUP_get_order(
-@@ -50,23 +54,6 @@ extern "C" {
+@@ -50,26 +54,9 @@ extern "C" {
  
      pub fn EC_GROUP_get_asn1_flag(group: *const EC_GROUP) -> c_int;
  
@@ -844,7 +1466,20 @@ index 849251000..6f717932b 100644
 -
      pub fn EC_GROUP_get_degree(group: *const EC_GROUP) -> c_int;
  
-     #[cfg(ossl110)]
+-    #[cfg(ossl110)]
++    #[cfg(any(ossl110, libressl))]
+     pub fn EC_GROUP_order_bits(group: *const EC_GROUP) -> c_int;
+ 
+     pub fn EC_GROUP_new_curve_GFp(
+@@ -103,7 +90,7 @@ extern "C" {
+ 
+     pub fn EC_POINT_dup(p: *const EC_POINT, group: *const EC_GROUP) -> *mut EC_POINT;
+ 
+-    #[cfg(any(ossl111, boringssl, libressl350, awslc))]
++    #[cfg(any(ossl111, boringssl, libressl, awslc))]
+     pub fn EC_POINT_get_affine_coordinates(
+         group: *const EC_GROUP,
+         p: *const EC_POINT,
 @@ -111,16 +98,8 @@ extern "C" {
          y: *mut BIGNUM,
          ctx: *mut BN_CTX,
@@ -859,7 +1494,7 @@ index 849251000..6f717932b 100644
 -    ) -> c_int;
 -
 -    pub fn EC_POINT_set_affine_coordinates_GFp(
-+    #[cfg(any(ossl111, boringssl, libressl350, awslc))]
++    #[cfg(any(ossl111, boringssl, libressl, awslc))]
 +    pub fn EC_POINT_set_affine_coordinates(
          group: *const EC_GROUP,
          p: *mut EC_POINT,
@@ -935,8 +1570,25 @@ index 849251000..6f717932b 100644
  
      pub fn EC_KEY_new() -> *mut EC_KEY;
  
-@@ -250,6 +268,17 @@ extern "C" {
-     #[cfg(any(ossl110, libressl273))]
+@@ -228,7 +246,7 @@ extern "C" {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum ECDSA_SIG {}
+     } else {
+         #[repr(C)]
+@@ -244,12 +262,23 @@ extern "C" {
+ 
+     pub fn ECDSA_SIG_free(sig: *mut ECDSA_SIG);
+ 
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn ECDSA_SIG_get0(sig: *const ECDSA_SIG, pr: *mut *const BIGNUM, ps: *mut *const BIGNUM);
+ 
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
      pub fn ECDSA_SIG_set0(sig: *mut ECDSA_SIG, pr: *mut BIGNUM, ps: *mut BIGNUM) -> c_int;
  
 +    pub fn d2i_ECDSA_SIG(
@@ -968,7 +1620,7 @@ index 849251000..6f717932b 100644
  }
 diff --git a/src/handwritten/encoder.rs b/src/handwritten/encoder.rs
 new file mode 100644
-index 000000000..3613fab1c
+index 0000000..3613fab
 --- /dev/null
 +++ b/src/handwritten/encoder.rs
 @@ -0,0 +1,56 @@
@@ -1029,7 +1681,7 @@ index 000000000..3613fab1c
 +    pub fn OSSL_ENCODER_to_fp(ctx: *mut OSSL_ENCODER_CTX, fp: *mut FILE) -> c_int;
 +}
 diff --git a/src/handwritten/err.rs b/src/handwritten/err.rs
-index 5653c1d18..9ebc605cd 100644
+index 5653c1d..9ebc605 100644
 --- a/src/handwritten/err.rs
 +++ b/src/handwritten/err.rs
 @@ -33,16 +33,9 @@ extern "C" {
@@ -1065,10 +1717,104 @@ index 5653c1d18..9ebc605cd 100644
 +    pub fn ERR_func_error_string(err: c_ulong) -> *const c_char;
 +}
 diff --git a/src/handwritten/evp.rs b/src/handwritten/evp.rs
-index a1be1da68..9a39a49d8 100644
+index a1be1da..2649848 100644
 --- a/src/handwritten/evp.rs
 +++ b/src/handwritten/evp.rs
-@@ -472,30 +472,64 @@ cfg_if! {
+@@ -93,7 +93,7 @@ extern "C" {
+     pub fn EVP_DigestFinal(ctx: *mut EVP_MD_CTX, res: *mut u8, n: *mut u32) -> c_int;
+     #[cfg(ossl111)]
+     pub fn EVP_DigestFinalXOF(ctx: *mut EVP_MD_CTX, res: *mut u8, len: usize) -> c_int;
+-    #[cfg(ossl330)]
++    #[cfg(any(ossl330, awslc))]
+     pub fn EVP_DigestSqueeze(ctx: *mut EVP_MD_CTX, res: *mut u8, len: usize) -> c_int;
+ 
+     #[cfg(ossl300)]
+@@ -169,6 +169,11 @@ extern "C" {
+         data: *const c_void,
+         dsize: size_t,
+     ) -> c_int;
++    pub fn EVP_DigestVerifyFinal(
++        ctx: *mut EVP_MD_CTX,
++        sigret: *const c_uchar,
++        siglen: size_t,
++    ) -> c_int;
+     pub fn EVP_SealInit(
+         ctx: *mut EVP_CIPHER_CTX,
+         type_: *const EVP_CIPHER,
+@@ -235,7 +240,7 @@ cfg_if! {
+     } else {
+         const_ptr_api! {
+             extern "C" {
+-                pub fn EVP_PKEY_size(pkey: #[const_ptr_if(any(ossl111b, libressl280))] EVP_PKEY) -> c_int;
++                pub fn EVP_PKEY_size(pkey: #[const_ptr_if(any(ossl111b, libressl))] EVP_PKEY) -> c_int;
+             }
+         }
+     }
+@@ -261,15 +266,6 @@ cfg_if! {
+         }
+     }
+ }
+-const_ptr_api! {
+-    extern "C" {
+-        pub fn EVP_DigestVerifyFinal(
+-            ctx: *mut EVP_MD_CTX,
+-            sigret: #[const_ptr_if(any(ossl102, libressl280))] c_uchar,
+-            siglen: size_t,
+-        ) -> c_int;
+-    }
+-}
+ 
+ extern "C" {
+     pub fn EVP_CIPHER_CTX_new() -> *mut EVP_CIPHER_CTX;
+@@ -310,7 +306,7 @@ extern "C" {
+     #[cfg(ossl111)]
+     pub fn EVP_shake256() -> *const EVP_MD;
+     pub fn EVP_ripemd160() -> *const EVP_MD;
+-    #[cfg(all(any(ossl111, libressl291), not(osslconf = "OPENSSL_NO_SM3")))]
++    #[cfg(all(any(ossl111, libressl), not(osslconf = "OPENSSL_NO_SM3")))]
+     pub fn EVP_sm3() -> *const EVP_MD;
+     pub fn EVP_des_ecb() -> *const EVP_CIPHER;
+     pub fn EVP_des_ede3() -> *const EVP_CIPHER;
+@@ -373,7 +369,7 @@ extern "C" {
+     pub fn EVP_aes_256_wrap() -> *const EVP_CIPHER;
+     #[cfg(ossl110)]
+     pub fn EVP_aes_256_wrap_pad() -> *const EVP_CIPHER;
+-    #[cfg(all(any(ossl110, libressl310), not(osslconf = "OPENSSL_NO_CHACHA")))]
++    #[cfg(all(any(ossl110, libressl), not(osslconf = "OPENSSL_NO_CHACHA")))]
+     pub fn EVP_chacha20() -> *const EVP_CIPHER;
+     #[cfg(all(any(ossl110, libressl360), not(osslconf = "OPENSSL_NO_CHACHA")))]
+     pub fn EVP_chacha20_poly1305() -> *const EVP_CIPHER;
+@@ -386,15 +382,15 @@ extern "C" {
+     #[cfg(not(osslconf = "OPENSSL_NO_SEED"))]
+     pub fn EVP_seed_ofb() -> *const EVP_CIPHER;
+ 
+-    #[cfg(all(any(ossl111, libressl291), not(osslconf = "OPENSSL_NO_SM4")))]
++    #[cfg(all(any(ossl111, libressl), not(osslconf = "OPENSSL_NO_SM4")))]
+     pub fn EVP_sm4_ecb() -> *const EVP_CIPHER;
+-    #[cfg(all(any(ossl111, libressl291), not(osslconf = "OPENSSL_NO_SM4")))]
++    #[cfg(all(any(ossl111, libressl), not(osslconf = "OPENSSL_NO_SM4")))]
+     pub fn EVP_sm4_cbc() -> *const EVP_CIPHER;
+-    #[cfg(all(any(ossl111, libressl291), not(osslconf = "OPENSSL_NO_SM4")))]
++    #[cfg(all(any(ossl111, libressl), not(osslconf = "OPENSSL_NO_SM4")))]
+     pub fn EVP_sm4_cfb128() -> *const EVP_CIPHER;
+-    #[cfg(all(any(ossl111, libressl291), not(osslconf = "OPENSSL_NO_SM4")))]
++    #[cfg(all(any(ossl111, libressl), not(osslconf = "OPENSSL_NO_SM4")))]
+     pub fn EVP_sm4_ofb() -> *const EVP_CIPHER;
+-    #[cfg(all(any(ossl111, libressl291), not(osslconf = "OPENSSL_NO_SM4")))]
++    #[cfg(all(any(ossl111, libressl), not(osslconf = "OPENSSL_NO_SM4")))]
+     pub fn EVP_sm4_ctr() -> *const EVP_CIPHER;
+ 
+     #[cfg(not(osslconf = "OPENSSL_NO_CAMELLIA"))]
+@@ -465,37 +461,71 @@ cfg_if! {
+         }
+         const_ptr_api! {
+             extern "C" {
+-                pub fn EVP_PKEY_bits(key: #[const_ptr_if(any(ossl110, libressl280))] EVP_PKEY) -> c_int;
++                pub fn EVP_PKEY_bits(key: #[const_ptr_if(any(ossl110, libressl))] EVP_PKEY) -> c_int;
+                 #[cfg(any(ossl110, libressl360))]
+-                pub fn EVP_PKEY_security_bits(pkey: #[const_ptr_if(any(ossl110, libressl280))] EVP_PKEY) -> c_int;
++                pub fn EVP_PKEY_security_bits(pkey: #[const_ptr_if(any(ossl110, libressl))] EVP_PKEY) -> c_int;
+             }
          }
      }
  }
@@ -1100,7 +1846,8 @@ index a1be1da68..9a39a49d8 100644
 +extern "C" {
      pub fn EVP_PKEY_new() -> *mut EVP_PKEY;
      pub fn EVP_PKEY_free(k: *mut EVP_PKEY);
-     #[cfg(any(ossl110, libressl270))]
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
      pub fn EVP_PKEY_up_ref(pkey: *mut EVP_PKEY) -> c_int;
  
 +    #[cfg(ossl300)]
@@ -1138,7 +1885,7 @@ index a1be1da68..9a39a49d8 100644
  
      pub fn EVP_PKEY_copy_parameters(to: *mut EVP_PKEY, from: *const EVP_PKEY) -> c_int;
  
-@@ -535,6 +569,12 @@ extern "C" {
+@@ -535,6 +565,12 @@ extern "C" {
  
      pub fn EVP_PKEY_CTX_new(k: *mut EVP_PKEY, e: *mut ENGINE) -> *mut EVP_PKEY_CTX;
      pub fn EVP_PKEY_CTX_new_id(id: c_int, e: *mut ENGINE) -> *mut EVP_PKEY_CTX;
@@ -1151,7 +1898,7 @@ index a1be1da68..9a39a49d8 100644
      pub fn EVP_PKEY_CTX_free(ctx: *mut EVP_PKEY_CTX);
  
      pub fn EVP_PKEY_CTX_ctrl(
-@@ -580,9 +620,26 @@ extern "C" {
+@@ -580,9 +616,26 @@ extern "C" {
          ...
      ) -> *mut EVP_PKEY;
      pub fn EVP_PKEY_keygen_init(ctx: *mut EVP_PKEY_CTX) -> c_int;
@@ -1178,7 +1925,7 @@ index a1be1da68..9a39a49d8 100644
      pub fn EVP_PKEY_sign(
          ctx: *mut EVP_PKEY_CTX,
          sig: *mut c_uchar,
-@@ -591,6 +648,14 @@ extern "C" {
+@@ -591,6 +644,14 @@ extern "C" {
          tbslen: size_t,
      ) -> c_int;
      pub fn EVP_PKEY_verify_init(ctx: *mut EVP_PKEY_CTX) -> c_int;
@@ -1193,7 +1940,7 @@ index a1be1da68..9a39a49d8 100644
      pub fn EVP_PKEY_verify(
          ctx: *mut EVP_PKEY_CTX,
          sig: *const c_uchar,
-@@ -622,11 +687,34 @@ extern "C" {
+@@ -622,11 +683,34 @@ extern "C" {
          sig: *const c_uchar,
          siglen: size_t,
      ) -> c_int;
@@ -1223,12 +1970,13 @@ index a1be1da68..9a39a49d8 100644
  
  const_ptr_api! {
      extern "C" {
-         pub fn EVP_PKCS82PKEY(p8: #[const_ptr_if(any(ossl110, libressl280))] PKCS8_PRIV_KEY_INFO) -> *mut EVP_PKEY;
+-        pub fn EVP_PKCS82PKEY(p8: #[const_ptr_if(any(ossl110, libressl280))] PKCS8_PRIV_KEY_INFO) -> *mut EVP_PKEY;
++        pub fn EVP_PKCS82PKEY(p8: #[const_ptr_if(any(ossl110, libressl))] PKCS8_PRIV_KEY_INFO) -> *mut EVP_PKEY;
 +        pub fn EVP_PKEY2PKCS8(pkey: #[const_ptr_if(any(ossl300))] EVP_PKEY) -> *mut PKCS8_PRIV_KEY_INFO;
      }
  }
  
-@@ -663,3 +751,78 @@ extern "C" {
+@@ -663,3 +747,114 @@ extern "C" {
      pub fn EVP_EncodeBlock(dst: *mut c_uchar, src: *const c_uchar, src_len: c_int) -> c_int;
      pub fn EVP_DecodeBlock(dst: *mut c_uchar, src: *const c_uchar, src_len: c_int) -> c_int;
  }
@@ -1307,18 +2055,57 @@ index a1be1da68..9a39a49d8 100644
 +        }
 +    }
 +}
++
++cfg_if! {
++    if #[cfg(ossl300)] {
++        extern "C" {
++            pub fn EVP_MAC_fetch(libctx: *mut OSSL_LIB_CTX, algorithm: *const c_char, properties: *const c_char) -> *mut EVP_MAC;
++            pub fn EVP_MAC_up_ref(mac: *mut EVP_MAC) -> c_int;
++            pub fn EVP_MAC_free(mac: *mut EVP_MAC);
++            pub fn EVP_MAC_is_a(mac: *const EVP_MAC, name: *const c_char) -> c_int;
++            pub fn EVP_MAC_get0_name(mac: *const EVP_MAC) -> *const c_char;
++            pub fn EVP_MAC_get0_description(mac: *const EVP_MAC) -> *const c_char;
++            pub fn EVP_MAC_get0_provider(mac: *const EVP_MAC) -> *const OSSL_PROVIDER;
++            pub fn EVP_MAC_get_params(mac: *mut EVP_MAC, params: *mut OSSL_PARAM) -> c_int;
++
++            pub fn EVP_MAC_CTX_new(mac: *mut EVP_MAC) -> *mut EVP_MAC_CTX;
++            pub fn EVP_MAC_CTX_free(ctx: *mut EVP_MAC_CTX);
++            pub fn EVP_MAC_CTX_dup(src: *const EVP_MAC_CTX) -> *mut EVP_MAC_CTX;
++            pub fn EVP_MAC_CTX_get0_mac(ctx: *mut EVP_MAC_CTX) -> *mut EVP_MAC;
++            pub fn EVP_MAC_CTX_get_params(ctx: *mut EVP_MAC_CTX, params: *mut OSSL_PARAM) -> c_int;
++            pub fn EVP_MAC_CTX_set_params(ctx: *mut EVP_MAC_CTX, params: *const OSSL_PARAM) -> c_int;
++
++            pub fn EVP_MAC_CTX_get_mac_size(ctx: *mut EVP_MAC_CTX) -> size_t;
++            pub fn EVP_MAC_CTX_get_block_size(ctx: *mut EVP_MAC_CTX) -> size_t;
++
++            pub fn EVP_MAC_init(ctx: *mut EVP_MAC_CTX, key: *const c_uchar, keylen: size_t, params: *const OSSL_PARAM) -> c_int;
++            pub fn EVP_MAC_update(ctx: *mut EVP_MAC_CTX, data: *const c_uchar, datalen: size_t) -> c_int;
++            pub fn EVP_MAC_final(ctx: *mut EVP_MAC_CTX, out: *mut c_uchar, outl: *mut size_t, outsize: size_t) -> c_int;
++            pub fn EVP_MAC_finalXOF(ctx: *mut EVP_MAC_CTX, out: *mut c_uchar, outsize: size_t) -> c_int;
++
++            pub fn EVP_MAC_gettable_params(mac: *const EVP_MAC) -> *const OSSL_PARAM;
++            pub fn EVP_MAC_gettable_ctx_params(mac: *const EVP_MAC) -> *const OSSL_PARAM;
++            pub fn EVP_MAC_settable_ctx_params(mac: *const EVP_MAC) -> *const OSSL_PARAM;
++            pub fn EVP_MAC_CTX_gettable_params(ctx: *mut EVP_MAC_CTX) -> *const OSSL_PARAM;
++            pub fn EVP_MAC_CTX_settable_params(ctx: *mut EVP_MAC_CTX) -> *const OSSL_PARAM;
++        }
++    }
++}
 diff --git a/src/handwritten/hmac.rs b/src/handwritten/hmac.rs
-index b52d63fb1..99ea80a59 100644
+index b52d63f..949b33d 100644
 --- a/src/handwritten/hmac.rs
 +++ b/src/handwritten/hmac.rs
-@@ -2,6 +2,7 @@ use libc::*;
+@@ -2,8 +2,9 @@ use libc::*;
  
  use super::super::*;
  
 +#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
  cfg_if! {
-     if #[cfg(any(ossl110, libressl350))] {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
          extern "C" {
+             pub fn HMAC_CTX_new() -> *mut HMAC_CTX;
+             pub fn HMAC_CTX_free(ctx: *mut HMAC_CTX);
 @@ -16,6 +17,7 @@ cfg_if! {
      }
  }
@@ -1328,7 +2115,7 @@ index b52d63fb1..99ea80a59 100644
      pub fn HMAC_Init_ex(
          ctx: *mut HMAC_CTX,
 diff --git a/src/handwritten/mod.rs b/src/handwritten/mod.rs
-index 47b3360fd..e4005af3c 100644
+index 47b3360..e4005af 100644
 --- a/src/handwritten/mod.rs
 +++ b/src/handwritten/mod.rs
 @@ -6,15 +6,20 @@ pub use self::cmac::*;
@@ -1373,8 +2160,23 @@ index 47b3360fd..e4005af3c 100644
  mod params;
  mod pem;
  mod pkcs12;
+diff --git a/src/handwritten/ocsp.rs b/src/handwritten/ocsp.rs
+index c194a83..4a14f5f 100644
+--- a/src/handwritten/ocsp.rs
++++ b/src/handwritten/ocsp.rs
+@@ -13,8 +13,8 @@ const_ptr_api! {
+     extern "C" {
+         pub fn OCSP_cert_to_id(
+             dgst: *const EVP_MD,
+-            subject: #[const_ptr_if(any(ossl110, libressl281))] X509,
+-            issuer: #[const_ptr_if(any(ossl110, libressl281))] X509,
++            subject: #[const_ptr_if(any(ossl110, libressl))] X509,
++            issuer: #[const_ptr_if(any(ossl110, libressl))] X509,
+         ) -> *mut OCSP_CERTID;
+     }
+ }
 diff --git a/src/handwritten/params.rs b/src/handwritten/params.rs
-index 542cef337..8fae2f218 100644
+index 542cef3..8fae2f2 100644
 --- a/src/handwritten/params.rs
 +++ b/src/handwritten/params.rs
 @@ -2,15 +2,90 @@ use super::super::*;
@@ -1472,7 +2274,7 @@ index 542cef337..8fae2f218 100644
 +    ) -> c_int;
  }
 diff --git a/src/handwritten/pem.rs b/src/handwritten/pem.rs
-index 42997177e..099aea768 100644
+index 4299717..e69e5fe 100644
 --- a/src/handwritten/pem.rs
 +++ b/src/handwritten/pem.rs
 @@ -15,35 +15,6 @@ const_ptr_api! {
@@ -1576,8 +2378,18 @@ index 42997177e..099aea768 100644
      pub fn PEM_read_bio_PrivateKey(
          bio: *mut BIO,
          out: *mut *mut EVP_PKEY,
-@@ -189,3 +109,90 @@ extern "C" {
-     #[cfg(ossl101)]
+@@ -179,13 +99,98 @@ extern "C" {
+         u: *mut c_void,
+     ) -> *mut PKCS7;
+ 
+-    #[cfg(ossl101)]
+     pub fn PEM_read_bio_CMS(
+         bio: *mut BIO,
+         out: *mut *mut CMS_ContentInfo,
+         callback: pem_password_cb,
+         user_data: *mut c_void,
+     ) -> *mut CMS_ContentInfo;
+-    #[cfg(ossl101)]
      pub fn PEM_write_bio_CMS(bio: *mut BIO, cms: *const CMS_ContentInfo) -> c_int;
  }
 +
@@ -1667,8 +2479,23 @@ index 42997177e..099aea768 100644
 +        pub fn PEM_write_bio_RSAPublicKey(bp: *mut BIO, rsa: *const RSA) -> c_int;
 +    }
 +}
+diff --git a/src/handwritten/pkcs12.rs b/src/handwritten/pkcs12.rs
+index 728c333..0553dfd 100644
+--- a/src/handwritten/pkcs12.rs
++++ b/src/handwritten/pkcs12.rs
+@@ -36,8 +36,8 @@ extern "C" {
+ const_ptr_api! {
+     extern "C" {
+         pub fn PKCS12_create(
+-            pass: #[const_ptr_if(any(ossl110, libressl280))] c_char,
+-            friendly_name: #[const_ptr_if(any(ossl110, libressl280))] c_char,
++            pass: #[const_ptr_if(any(ossl110, libressl))] c_char,
++            friendly_name: #[const_ptr_if(any(ossl110, libressl))] c_char,
+             pkey: *mut EVP_PKEY,
+             cert: *mut X509,
+             ca: *mut stack_st_X509,
 diff --git a/src/handwritten/rsa.rs b/src/handwritten/rsa.rs
-index d05edfc30..5aca2b898 100644
+index d05edfc..ddc42a2 100644
 --- a/src/handwritten/rsa.rs
 +++ b/src/handwritten/rsa.rs
 @@ -4,6 +4,9 @@ use libc::*;
@@ -1681,7 +2508,7 @@ index d05edfc30..5aca2b898 100644
              pub fn EVP_PKEY_CTX_set_rsa_padding(ctx: *mut EVP_PKEY_CTX, pad_mode: c_int) -> c_int;
              pub fn EVP_PKEY_CTX_get_rsa_padding(ctx: *mut EVP_PKEY_CTX, pad_mode: *mut c_int) -> c_int;
  
-@@ -13,6 +16,7 @@ cfg_if! {
+@@ -13,31 +16,32 @@ cfg_if! {
      }
  }
  
@@ -1689,11 +2516,201 @@ index d05edfc30..5aca2b898 100644
  extern "C" {
      pub fn RSA_new() -> *mut RSA;
      pub fn RSA_size(k: *const RSA) -> c_int;
+ 
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn RSA_set0_key(r: *mut RSA, n: *mut BIGNUM, e: *mut BIGNUM, d: *mut BIGNUM) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn RSA_set0_factors(r: *mut RSA, p: *mut BIGNUM, q: *mut BIGNUM) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn RSA_set0_crt_params(
+         r: *mut RSA,
+         dmp1: *mut BIGNUM,
+         dmq1: *mut BIGNUM,
+         iqmp: *mut BIGNUM,
+     ) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn RSA_get0_key(
+         r: *const RSA,
+         n: *mut *const BIGNUM,
+         e: *mut *const BIGNUM,
+         d: *mut *const BIGNUM,
+     );
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn RSA_get0_factors(r: *const RSA, p: *mut *const BIGNUM, q: *mut *const BIGNUM);
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn RSA_get0_crt_params(
+         r: *const RSA,
+         dmp1: *mut *const BIGNUM,
 diff --git a/src/handwritten/ssl.rs b/src/handwritten/ssl.rs
-index 163c75aed..9a6ebdf18 100644
+index 163c75a..c7b718e 100644
 --- a/src/handwritten/ssl.rs
 +++ b/src/handwritten/ssl.rs
-@@ -478,6 +478,8 @@ const_ptr_api! {
+@@ -4,64 +4,8 @@ use libc::*;
+ pub enum SSL_METHOD {}
+ pub enum SSL_CIPHER {}
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum SSL_SESSION {}
+-    } else if #[cfg(libressl251)] {
+-        #[repr(C)]
+-        pub struct SSL_SESSION {
+-            ssl_version: c_int,
+-            pub master_key_length: c_int,
+-            pub master_key: [c_uchar; 48],
+-            session_id_length: c_uint,
+-            session_id: [c_uchar; SSL_MAX_SSL_SESSION_ID_LENGTH as usize],
+-            sid_ctx_length: c_uint,
+-            sid_ctx: [c_uchar; SSL_MAX_SID_CTX_LENGTH as usize],
+-            peer: *mut X509,
+-            verify_result: c_long,
+-            timeout: c_long,
+-            time: time_t,
+-            pub references: c_int,
+-            cipher: *const SSL_CIPHER,
+-            cipher_id: c_long,
+-            ciphers: *mut stack_st_SSL_CIPHER,
+-            tlsext_hostname: *mut c_char,
+-            tlsext_tick: *mut c_uchar,
+-            tlsext_ticklen: size_t,
+-            tlsext_tick_lifetime_int: c_long,
+-            internal: *mut c_void,
+-        }
+-    } else if #[cfg(libressl)] {
+-        #[repr(C)]
+-        pub struct SSL_SESSION {
+-            ssl_version: c_int,
+-            pub master_key_length: c_int,
+-            pub master_key: [c_uchar; 48],
+-            session_id_length: c_uint,
+-            session_id: [c_uchar; SSL_MAX_SSL_SESSION_ID_LENGTH as usize],
+-            sid_ctx_length: c_uint,
+-            sid_ctx: [c_uchar; SSL_MAX_SID_CTX_LENGTH as usize],
+-            not_resumable: c_int,
+-            sess_cert: *mut c_void,
+-            peer: *mut X509,
+-            verify_result: c_long,
+-            timeout: c_long,
+-            time: time_t,
+-            pub references: c_int,
+-            cipher: *const c_void,
+-            cipher_id: c_ulong,
+-            ciphers: *mut c_void,
+-            ex_data: CRYPTO_EX_DATA,
+-            prev: *mut c_void,
+-            next: *mut c_void,
+-            tlsext_hostname: *mut c_char,
+-            tlsext_ecpointformatlist_length: size_t,
+-            tlsext_ecpointformatlist: *mut u8,
+-            tlsext_ellipticcurvelist_length: size_t,
+-            tlsext_ellipticcurvelist: *mut u16,
+-            tlsext_tick: *mut c_uchar,
+-            tlsext_ticklen: size_t,
+-            tlsext_tick_lifetime_hint: c_long,
+-        }
+     } else {
+         #[repr(C)]
+         pub struct SSL_SESSION {
+@@ -225,7 +169,7 @@ extern "C" {
+ }
+ cfg_if! {
+     // const change in passed function pointer signature
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn SSL_CTX_sess_set_get_cb(
+                 ctx: *mut SSL_CTX,
+@@ -257,7 +201,7 @@ extern "C" {
+ 
+ cfg_if! {
+     // const change in passed function pointer signature
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn SSL_CTX_set_cookie_verify_cb(
+                 s: *mut SSL_CTX,
+@@ -339,11 +283,8 @@ extern "C" {
+ }
+ 
+ extern "C" {
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn SSL_CTX_set_alpn_protos(s: *mut SSL_CTX, data: *const c_uchar, len: c_uint) -> c_int;
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn SSL_set_alpn_protos(s: *mut SSL, data: *const c_uchar, len: c_uint) -> c_int;
+-    #[cfg(any(ossl102, libressl261))]
+     #[link_name = "SSL_CTX_set_alpn_select_cb"]
+     pub fn SSL_CTX_set_alpn_select_cb__fixed_rust(
+         ssl: *mut SSL_CTX,
+@@ -359,7 +300,6 @@ extern "C" {
+         >,
+         arg: *mut c_void,
+     );
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn SSL_get0_alpn_selected(s: *const SSL, data: *mut *const c_uchar, len: *mut c_uint);
+ }
+ 
+@@ -413,13 +353,13 @@ extern "C" {
+     #[cfg(ossl111)]
+     pub fn SSL_CTX_set_keylog_callback(ctx: *mut SSL_CTX, cb: SSL_CTX_keylog_cb_func);
+ 
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_CTX_set_max_early_data(ctx: *mut SSL_CTX, max_early_data: u32) -> c_int;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_CTX_get_max_early_data(ctx: *const SSL_CTX) -> u32;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_set_max_early_data(ctx: *mut SSL, max_early_data: u32) -> c_int;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_get_max_early_data(ctx: *const SSL) -> u32;
+ 
+     pub fn SSL_get_finished(s: *const SSL, buf: *mut c_void, count: size_t) -> size_t;
+@@ -437,19 +377,13 @@ const_ptr_api! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(libressl261)] {
++    if #[cfg(libressl)] {
+         extern "C" {
+             pub fn SSL_CTX_set_min_proto_version(ctx: *mut SSL_CTX, version: u16) -> c_int;
+             pub fn SSL_CTX_set_max_proto_version(ctx: *mut SSL_CTX, version: u16) -> c_int;
+             pub fn SSL_set_min_proto_version(s: *mut SSL, version: u16) -> c_int;
+             pub fn SSL_set_max_proto_version(s: *mut SSL, version: u16) -> c_int;
+-        }
+-    }
+-}
+ 
+-cfg_if! {
+-    if #[cfg(libressl270)] {
+-        extern "C" {
+             pub fn SSL_CTX_get_min_proto_version(ctx: *mut SSL_CTX) -> c_int;
+             pub fn SSL_CTX_get_max_proto_version(ctx: *mut SSL_CTX) -> c_int;
+             pub fn SSL_get_min_proto_version(s: *mut SSL) -> c_int;
+@@ -462,7 +396,7 @@ extern "C" {
+     pub fn SSL_CTX_set_cipher_list(ssl: *mut SSL_CTX, s: *const c_char) -> c_int;
+     pub fn SSL_CTX_new(method: *const SSL_METHOD) -> *mut SSL_CTX;
+     pub fn SSL_CTX_free(ctx: *mut SSL_CTX);
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_CTX_up_ref(x: *mut SSL_CTX) -> c_int;
+     pub fn SSL_CTX_get_cert_store(ctx: *const SSL_CTX) -> *mut X509_STORE;
+     pub fn SSL_CTX_set_cert_store(ctx: *mut SSL_CTX, store: *mut X509_STORE);
+@@ -472,12 +406,14 @@ extern "C" {
+ }
+ const_ptr_api! {
+     extern "C" {
+-        pub fn SSL_CIPHER_get_version(cipher: *const SSL_CIPHER) -> #[const_ptr_if(any(ossl110, libressl280))] c_char;
++        pub fn SSL_CIPHER_get_version(cipher: *const SSL_CIPHER) -> #[const_ptr_if(any(ossl110, libressl))] c_char;
+     }
+ }
  extern "C" {
      #[cfg(ossl111)]
      pub fn SSL_CIPHER_get_handshake_digest(cipher: *const SSL_CIPHER) -> *const EVP_MD;
@@ -1702,7 +2719,147 @@ index 163c75aed..9a6ebdf18 100644
      pub fn SSL_CIPHER_get_name(cipher: *const SSL_CIPHER) -> *const c_char;
      #[cfg(ossl111)]
      pub fn SSL_CIPHER_standard_name(cipher: *const SSL_CIPHER) -> *const c_char;
-@@ -834,6 +836,7 @@ extern "C" {
+@@ -488,9 +424,9 @@ extern "C" {
+     pub fn SSL_set_bio(ssl: *mut SSL, rbio: *mut BIO, wbio: *mut BIO);
+     pub fn SSL_get_rbio(ssl: *const SSL) -> *mut BIO;
+     pub fn SSL_get_wbio(ssl: *const SSL) -> *mut BIO;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_CTX_set_ciphersuites(ctx: *mut SSL_CTX, str: *const c_char) -> c_int;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_set_ciphersuites(ssl: *mut SSL, str: *const c_char) -> c_int;
+     pub fn SSL_set_cipher_list(ssl: *mut SSL, s: *const c_char) -> c_int;
+     pub fn SSL_set_ssl_method(s: *mut SSL, method: *const SSL_METHOD) -> c_int;
+@@ -520,7 +456,7 @@ extern "C" {
+     pub fn SSL_use_PrivateKey_file(ssl: *mut SSL, file: *const c_char, type_: c_int) -> c_int;
+     pub fn SSL_use_PrivateKey(ssl: *mut SSL, pkey: *mut EVP_PKEY) -> c_int;
+     pub fn SSL_use_certificate(ssl: *mut SSL, x: *mut X509) -> c_int;
+-    #[cfg(any(ossl110, libressl332))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_use_certificate_chain_file(ssl: *mut SSL, file: *const c_char) -> c_int;
+     pub fn SSL_set_client_CA_list(s: *mut SSL, name_list: *mut stack_st_X509_NAME);
+     pub fn SSL_add_client_CA(ssl: *mut SSL, x: *mut X509) -> c_int;
+@@ -533,16 +469,16 @@ extern "C" {
+ 
+     pub fn SSL_SESSION_get_time(s: *const SSL_SESSION) -> c_long;
+     pub fn SSL_SESSION_get_timeout(s: *const SSL_SESSION) -> c_long;
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_SESSION_get_protocol_version(s: *const SSL_SESSION) -> c_int;
+ 
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_SESSION_set_max_early_data(ctx: *mut SSL_SESSION, max_early_data: u32) -> c_int;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_SESSION_get_max_early_data(ctx: *const SSL_SESSION) -> u32;
+ 
+     pub fn SSL_SESSION_get_id(s: *const SSL_SESSION, len: *mut c_uint) -> *const c_uchar;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_SESSION_up_ref(ses: *mut SSL_SESSION) -> c_int;
+     pub fn SSL_SESSION_free(s: *mut SSL_SESSION);
+ }
+@@ -575,7 +511,7 @@ extern "C" {
+     );
+     pub fn SSL_CTX_set_verify_depth(ctx: *mut SSL_CTX, depth: c_int);
+ 
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_CTX_set_post_handshake_auth(ctx: *mut SSL_CTX, val: c_int);
+ 
+     pub fn SSL_CTX_check_private_key(ctx: *const SSL_CTX) -> c_int;
+@@ -588,10 +524,8 @@ extern "C" {
+ 
+     pub fn SSL_new(ctx: *mut SSL_CTX) -> *mut SSL;
+ 
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn SSL_CTX_get0_param(ctx: *mut SSL_CTX) -> *mut X509_VERIFY_PARAM;
+ 
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn SSL_get0_param(ssl: *mut SSL) -> *mut X509_VERIFY_PARAM;
+ }
+ 
+@@ -640,14 +574,14 @@ extern "C" {
+     pub fn SSL_stateless(s: *mut SSL) -> c_int;
+     pub fn SSL_connect(ssl: *mut SSL) -> c_int;
+     pub fn SSL_read(ssl: *mut SSL, buf: *mut c_void, num: c_int) -> c_int;
+-    #[cfg(any(ossl111, libressl350))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_read_ex(ssl: *mut SSL, buf: *mut c_void, num: usize, readbytes: *mut usize)
+         -> c_int;
+     pub fn SSL_peek(ssl: *mut SSL, buf: *mut c_void, num: c_int) -> c_int;
+-    #[cfg(any(ossl111, libressl350))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_peek_ex(ssl: *mut SSL, buf: *mut c_void, num: usize, readbytes: *mut usize)
+         -> c_int;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_read_early_data(
+         s: *mut SSL,
+         buf: *mut c_void,
+@@ -667,14 +601,14 @@ extern "C" {
+ 
+ extern "C" {
+     pub fn SSL_write(ssl: *mut SSL, buf: *const c_void, num: c_int) -> c_int;
+-    #[cfg(any(ossl111, libressl350))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_write_ex(
+         ssl: *mut SSL,
+         buf: *const c_void,
+         num: size_t,
+         written: *mut size_t,
+     ) -> c_int;
+-    #[cfg(any(ossl111, libressl340))]
++    #[cfg(any(ossl111, libressl))]
+     pub fn SSL_write_early_data(
+         s: *mut SSL,
+         buf: *const c_void,
+@@ -692,7 +626,7 @@ extern "C" {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl291))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn TLS_method() -> *const SSL_METHOD;
+ 
+@@ -770,17 +704,11 @@ extern "C" {
+     ) -> *mut c_char;
+ 
+     pub fn SSL_get_certificate(ssl: *const SSL) -> *mut X509;
+-}
+-const_ptr_api! {
+-    extern "C" {
+-        pub fn SSL_get_privatekey(ssl: #[const_ptr_if(any(ossl102, libressl280))] SSL) -> *mut EVP_PKEY;
+-    }
++    pub fn SSL_get_privatekey(ssl: *const SSL) -> *mut EVP_PKEY;
+ }
+ 
+ extern "C" {
+-    #[cfg(any(ossl102, libressl270))]
+     pub fn SSL_CTX_get0_certificate(ctx: *const SSL_CTX) -> *mut X509;
+-    #[cfg(any(ossl102, libressl340))]
+     pub fn SSL_CTX_get0_privatekey(ctx: *const SSL_CTX) -> *mut EVP_PKEY;
+ 
+     pub fn SSL_set_shutdown(ss: *mut SSL, mode: c_int);
+@@ -794,11 +722,11 @@ extern "C" {
+     #[cfg(ossl110)]
+     pub fn SSL_get0_verified_chain(ssl: *const SSL) -> *mut stack_st_X509;
+ 
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_get_client_random(ssl: *const SSL, out: *mut c_uchar, len: size_t) -> size_t;
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_get_server_random(ssl: *const SSL, out: *mut c_uchar, len: size_t) -> size_t;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_SESSION_get_master_key(
+         session: *const SSL_SESSION,
+         out: *mut c_uchar,
+@@ -834,6 +762,7 @@ extern "C" {
      pub fn SSL_get_ex_data_X509_STORE_CTX_idx() -> c_int;
  }
  
@@ -1710,7 +2867,37 @@ index 163c75aed..9a6ebdf18 100644
  extern "C" {
      #[link_name = "SSL_CTX_set_tmp_dh_callback"]
      pub fn SSL_CTX_set_tmp_dh_callback__fixed_rust(
-@@ -1011,3 +1014,9 @@ extern "C" {
+@@ -899,9 +828,9 @@ extern "C" {
+ }
+ 
+ extern "C" {
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_CIPHER_get_cipher_nid(c: *const SSL_CIPHER) -> c_int;
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn SSL_CIPHER_get_digest_nid(c: *const SSL_CIPHER) -> c_int;
+ }
+ 
+@@ -914,8 +843,7 @@ const_ptr_api! {
+ 
+ const_ptr_api! {
+     extern "C" {
+-        #[cfg(any(ossl102, libressl273))]
+-        pub fn SSL_is_server(s: #[const_ptr_if(any(ossl110f, libressl273))] SSL) -> c_int;
++        pub fn SSL_is_server(s: #[const_ptr_if(any(ossl110f, libressl))] SSL) -> c_int;
+     }
+ }
+ 
+@@ -997,6 +925,7 @@ extern "C" {
+     pub fn SSL_set_incoming_stream_policy(s: *mut SSL, policy: c_int, aec: u64) -> c_int;
+     pub fn SSL_get_accept_stream_queue_len(s: *mut SSL) -> usize;
+     pub fn SSL_set_default_stream_mode(s: *mut SSL, mode: u32) -> c_int;
++    pub fn SSL_get0_group_name(s: *mut SSL) -> *const c_char;
+ }
+ 
+ #[cfg(ossl330)]
+@@ -1011,3 +940,9 @@ extern "C" {
      pub fn SSL_get_value_uint(s: *mut SSL, class_: u32, id: u32, v: *mut u64) -> c_int;
      pub fn SSL_set_value_uint(s: *mut SSL, class_: u32, id: u32, v: u64) -> c_int;
  }
@@ -1721,22 +2908,479 @@ index 163c75aed..9a6ebdf18 100644
 +    pub fn SSL_set0_tmp_dh_pkey(s: *mut SSL, dhpkey: *mut EVP_PKEY) -> c_int;
 +}
 diff --git a/src/handwritten/types.rs b/src/handwritten/types.rs
-index d465a4414..c4692b1bd 100644
+index d465a44..440672a 100644
 --- a/src/handwritten/types.rs
 +++ b/src/handwritten/types.rs
-@@ -1072,9 +1072,9 @@ cfg_if! {
+@@ -27,7 +27,7 @@ pub enum ASN1_UTF8STRING {}
+ 
+ pub enum bio_st {} // FIXME remove
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum BIO {}
+     } else {
+         #[repr(C)]
+@@ -67,7 +67,7 @@ cfg_if! {
+     }
+ }
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum BIGNUM {}
+     } else {
+         #[repr(C)]
+@@ -87,7 +87,7 @@ pub enum BN_CTX {}
+ pub enum BN_GENCB {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum EVP_CIPHER {}
+     } else {
+         #[repr(C)]
+@@ -118,7 +118,7 @@ cfg_if! {
+ pub enum EVP_CIPHER_CTX {}
+ pub enum EVP_MD {}
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum EVP_MD_CTX {}
+     } else {
+         #[repr(C)]
+@@ -142,7 +142,7 @@ pub enum EVP_PKEY_CTX {}
+ pub enum CMAC_CTX {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum HMAC_CTX {}
+     } else {
+         #[repr(C)]
+@@ -158,7 +158,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum DH {}
+     } else {
+         #[repr(C)]
+@@ -187,7 +187,7 @@ cfg_if! {
+ pub enum DH_METHOD {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum DSA {}
+     } else {
+         #[repr(C)]
+@@ -216,36 +216,8 @@ cfg_if! {
+ pub enum DSA_METHOD {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum RSA {}
+-    } else if #[cfg(libressl)] {
+-        #[repr(C)]
+-        pub struct RSA {
+-            pub pad: c_int,
+-            pub version: c_long,
+-            pub meth: *const RSA_METHOD,
+-
+-            pub engine: *mut ENGINE,
+-            pub n: *mut BIGNUM,
+-            pub e: *mut BIGNUM,
+-            pub d: *mut BIGNUM,
+-            pub p: *mut BIGNUM,
+-            pub q: *mut BIGNUM,
+-            pub dmp1: *mut BIGNUM,
+-            pub dmq1: *mut BIGNUM,
+-            pub iqmp: *mut BIGNUM,
+-
+-            pub ex_data: CRYPTO_EX_DATA,
+-            pub references: c_int,
+-            pub flags: c_int,
+-
+-            pub _method_mod_n: *mut BN_MONT_CTX,
+-            pub _method_mod_p: *mut BN_MONT_CTX,
+-            pub _method_mod_q: *mut BN_MONT_CTX,
+-
+-            pub blinding: *mut BN_BLINDING,
+-            pub mt_blinding: *mut BN_BLINDING,
+-        }
+     } else {
+         #[repr(C)]
+         pub struct RSA {
+@@ -282,34 +254,8 @@ pub enum RSA_METHOD {}
+ pub enum EC_KEY {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509 {}
+-    } else if #[cfg(libressl)] {
+-        #[repr(C)]
+-        pub struct X509 {
+-            pub cert_info: *mut X509_CINF,
+-            pub sig_alg: *mut X509_ALGOR,
+-            pub signature: *mut ASN1_BIT_STRING,
+-            pub valid: c_int,
+-            pub references: c_int,
+-            pub name: *mut c_char,
+-            pub ex_data: CRYPTO_EX_DATA,
+-            pub ex_pathlen: c_long,
+-            pub ex_pcpathlen: c_long,
+-            pub ex_flags: c_ulong,
+-            pub ex_kusage: c_ulong,
+-            pub ex_xkusage: c_ulong,
+-            pub ex_nscert: c_ulong,
+-            skid: *mut c_void,
+-            akid: *mut c_void,
+-            policy_cache: *mut c_void,
+-            crldp: *mut c_void,
+-            altname: *mut c_void,
+-            nc: *mut c_void,
+-            #[cfg(not(osslconf = "OPENSSL_NO_SHA"))]
+-            sha1_hash: [c_uchar; 20],
+-            aux: *mut c_void,
+-        }
+     } else {
+         #[repr(C)]
+         pub struct X509 {
+@@ -361,7 +307,7 @@ pub enum X509_LOOKUP_METHOD {}
+ pub enum X509_NAME {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl270))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_STORE {}
+     } else {
+         #[repr(C)]
+@@ -399,34 +345,8 @@ cfg_if! {
+ pub enum X509_STORE_CTX {}
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_VERIFY_PARAM {}
+-    } else if #[cfg(libressl251)] {
+-        #[repr(C)]
+-        pub struct X509_VERIFY_PARAM {
+-            pub name: *mut c_char,
+-            pub check_time: time_t,
+-            pub inh_flags: c_ulong,
+-            pub flags: c_ulong,
+-            pub purpose: c_int,
+-            pub trust: c_int,
+-            pub depth: c_int,
+-            pub policies: *mut stack_st_ASN1_OBJECT,
+-            id: *mut c_void,
+-        }
+-    } else if #[cfg(libressl)] {
+-        #[repr(C)]
+-        pub struct X509_VERIFY_PARAM {
+-            pub name: *mut c_char,
+-            pub check_time: time_t,
+-            pub inh_flags: c_ulong,
+-            pub flags: c_ulong,
+-            pub purpose: c_int,
+-            pub trust: c_int,
+-            pub depth: c_int,
+-            pub policies: *mut stack_st_ASN1_OBJECT,
+-            //pub id: *mut X509_VERIFY_PARAM_ID,
+-        }
+     } else {
+         #[repr(C)]
+         pub struct X509_VERIFY_PARAM {
+@@ -445,7 +365,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl270))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_OBJECT {}
+     } else {
+         #[repr(C)]
+@@ -486,143 +406,8 @@ pub enum OPENSSL_INIT_SETTINGS {}
+ 
+ pub enum ENGINE {}
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum SSL {}
+-    } else if #[cfg(libressl251)] {
+-        #[repr(C)]
+-        pub struct SSL {
+-            version: c_int,
+-            method: *const SSL_METHOD,
+-            rbio: *mut BIO,
+-            wbio: *mut BIO,
+-            bbio: *mut BIO,
+-            pub server: c_int,
+-            s3: *mut c_void,
+-            d1: *mut c_void,
+-            param: *mut c_void,
+-            cipher_list: *mut stack_st_SSL_CIPHER,
+-            cert: *mut c_void,
+-            sid_ctx_length: c_uint,
+-            sid_ctx: [c_uchar; SSL_MAX_SID_CTX_LENGTH as usize],
+-            session: *mut SSL_SESSION,
+-            verify_mode: c_int,
+-            error: c_int,
+-            error_code: c_int,
+-            ctx: *mut SSL_CTX,
+-            verify_result: c_long,
+-            references: c_int,
+-            client_version: c_int,
+-            max_send_fragment: c_uint,
+-            tlsext_hostname: *mut c_char,
+-            tlsext_status_type: c_int,
+-            initial_ctx: *mut SSL_CTX,
+-            enc_read_ctx: *mut EVP_CIPHER_CTX,
+-            read_hash: *mut EVP_MD_CTX,
+-            internal: *mut c_void,
+-        }
+-    } else if #[cfg(libressl)] {
+-        #[repr(C)]
+-        pub struct SSL {
+-            version: c_int,
+-            type_: c_int,
+-            method: *const SSL_METHOD,
+-            rbio: *mut c_void,
+-            wbio: *mut c_void,
+-            bbio: *mut c_void,
+-            rwstate: c_int,
+-            in_handshake: c_int,
+-            handshake_func: Option<unsafe extern "C" fn(*mut SSL) -> c_int>,
+-            pub server: c_int,
+-            new_session: c_int,
+-            quiet_shutdown: c_int,
+-            shutdown: c_int,
+-            state: c_int,
+-            rstate: c_int,
+-            init_buf: *mut c_void,
+-            init_msg: *mut c_void,
+-            init_num: c_int,
+-            init_off: c_int,
+-            packet: *mut c_uchar,
+-            packet_length: c_uint,
+-            s3: *mut c_void,
+-            d1: *mut c_void,
+-            read_ahead: c_int,
+-            msg_callback: Option<
+-                unsafe extern "C" fn(c_int,
+-                                    c_int,
+-                                    c_int,
+-                                    *const c_void,
+-                                    size_t,
+-                                    *mut SSL,
+-                                    *mut c_void),
+-            >,
+-            msg_callback_arg: *mut c_void,
+-            hit: c_int,
+-            param: *mut c_void,
+-            cipher_list: *mut stack_st_SSL_CIPHER,
+-            cipher_list_by_id: *mut stack_st_SSL_CIPHER,
+-            mac_flags: c_int,
+-            aead_read_ctx: *mut c_void,
+-            enc_read_ctx: *mut EVP_CIPHER_CTX,
+-            read_hash: *mut EVP_MD_CTX,
+-            aead_write_ctx: *mut c_void,
+-            enc_write_ctx: *mut EVP_CIPHER_CTX,
+-            write_hash: *mut EVP_MD_CTX,
+-            cert: *mut c_void,
+-            sid_ctx_length: c_uint,
+-            sid_ctx: [c_uchar; SSL_MAX_SID_CTX_LENGTH as usize],
+-            session: *mut SSL_SESSION,
+-            generate_session_id: GEN_SESSION_CB,
+-            verify_mode: c_int,
+-            verify_callback: Option<unsafe extern "C" fn(c_int, *mut X509_STORE_CTX) -> c_int>,
+-            info_callback: Option<unsafe extern "C" fn(*mut SSL, c_int, c_int)>,
+-            error: c_int,
+-            error_code: c_int,
+-            ctx: *mut SSL_CTX,
+-            debug: c_int,
+-            verify_result: c_long,
+-            ex_data: CRYPTO_EX_DATA,
+-            client_CA: *mut stack_st_X509_NAME,
+-            references: c_int,
+-            options: c_ulong,
+-            mode: c_ulong,
+-            max_cert_list: c_long,
+-            first_packet: c_int,
+-            client_version: c_int,
+-            max_send_fragment: c_uint,
+-            tlsext_debug_cb:
+-                Option<unsafe extern "C" fn(*mut SSL, c_int, c_int, *mut c_uchar, c_int, *mut c_void)>,
+-            tlsext_debug_arg: *mut c_void,
+-            tlsext_hostname: *mut c_char,
+-            servername_done: c_int,
+-            tlsext_status_type: c_int,
+-            tlsext_status_expected: c_int,
+-            tlsext_ocsp_ids: *mut c_void,
+-            tlsext_ocsp_exts: *mut c_void,
+-            tlsext_ocsp_resp: *mut c_uchar,
+-            tlsext_ocsp_resplen: c_int,
+-            tlsext_ticket_expected: c_int,
+-            tlsext_ecpointformatlist_length: size_t,
+-            tlsext_ecpointformatlist: *mut c_uchar,
+-            tlsext_ellipticcurvelist_length: size_t,
+-            tlsext_ellipticcurvelist: *mut c_uchar,
+-            tlsext_session_ticket: *mut c_void,
+-            tlsext_session_ticket_ext_cb: tls_session_ticket_ext_cb_fn,
+-            tls_session_ticket_ext_cb_arg: *mut c_void,
+-            tls_session_secret_cb: tls_session_secret_cb_fn,
+-            tls_session_secret_cb_arg: *mut c_void,
+-            initial_ctx: *mut SSL_CTX,
+-            next_proto_negotiated: *mut c_uchar,
+-            next_proto_negotiated_len: c_uchar,
+-            srtp_profiles: *mut c_void,
+-            srtp_profile: *mut c_void,
+-            tlsext_heartbeat: c_uint,
+-            tlsext_hb_pending: c_uint,
+-            tlsext_hb_seq: c_uint,
+-            alpn_client_proto_list: *mut c_uchar,
+-            alpn_client_proto_list_len: c_uint,
+-            renegotiate: c_int,
+-        }
+     } else {
+         #[repr(C)]
+         pub struct SSL {
+@@ -788,95 +573,8 @@ cfg_if! {
+     }
+ }
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum SSL_CTX {}
+-    } else if #[cfg(libressl251)] {
+-        #[repr(C)]
+-        pub struct SSL_CTX {
+-            method: *const SSL_METHOD,
+-            cipher_list: *mut stack_st_SSL_CIPHER,
+-            cert_store: *mut c_void,
+-            session_timeout: c_long,
+-            pub references: c_int,
+-            extra_certs: *mut stack_st_X509,
+-            verify_mode: c_int,
+-            sid_ctx_length: c_uint,
+-            sid_ctx: [c_uchar; SSL_MAX_SID_CTX_LENGTH as usize],
+-            param: *mut X509_VERIFY_PARAM,
+-            default_passwd_callback: *mut c_void,
+-            default_passwd_callback_userdata: *mut c_void,
+-            internal: *mut c_void,
+-        }
+-    } else if #[cfg(libressl)] {
+-        #[repr(C)]
+-        pub struct SSL_CTX {
+-            method: *mut c_void,
+-            cipher_list: *mut c_void,
+-            cipher_list_by_id: *mut c_void,
+-            cert_store: *mut c_void,
+-            sessions: *mut c_void,
+-            session_cache_size: c_ulong,
+-            session_cache_head: *mut c_void,
+-            session_cache_tail: *mut c_void,
+-            session_cache_mode: c_int,
+-            session_timeout: c_long,
+-            new_session_cb: *mut c_void,
+-            remove_session_cb: *mut c_void,
+-            get_session_cb: *mut c_void,
+-            stats: [c_int; 11],
+-            pub references: c_int,
+-            app_verify_callback: *mut c_void,
+-            app_verify_arg: *mut c_void,
+-            default_passwd_callback: *mut c_void,
+-            default_passwd_callback_userdata: *mut c_void,
+-            client_cert_cb: *mut c_void,
+-            app_gen_cookie_cb: *mut c_void,
+-            app_verify_cookie_cb: *mut c_void,
+-            ex_dat: CRYPTO_EX_DATA,
+-            rsa_md5: *mut c_void,
+-            md5: *mut c_void,
+-            sha1: *mut c_void,
+-            extra_certs: *mut c_void,
+-            comp_methods: *mut c_void,
+-            info_callback: *mut c_void,
+-            client_CA: *mut c_void,
+-            options: c_ulong,
+-            mode: c_ulong,
+-            max_cert_list: c_long,
+-            cert: *mut c_void,
+-            read_ahead: c_int,
+-            msg_callback: *mut c_void,
+-            msg_callback_arg: *mut c_void,
+-            verify_mode: c_int,
+-            sid_ctx_length: c_uint,
+-            sid_ctx: [c_uchar; 32],
+-            default_verify_callback: *mut c_void,
+-            generate_session_id: *mut c_void,
+-            param: *mut c_void,
+-            quiet_shutdown: c_int,
+-            max_send_fragment: c_uint,
+-
+-            #[cfg(not(osslconf = "OPENSSL_NO_ENGINE"))]
+-            client_cert_engine: *mut c_void,
+-
+-            tlsext_servername_callback: *mut c_void,
+-            tlsect_servername_arg: *mut c_void,
+-            tlsext_tick_key_name: [c_uchar; 16],
+-            tlsext_tick_hmac_key: [c_uchar; 16],
+-            tlsext_tick_aes_key: [c_uchar; 16],
+-            tlsext_ticket_key_cb: *mut c_void,
+-            tlsext_status_cb: *mut c_void,
+-            tlsext_status_arg: *mut c_void,
+-            tlsext_opaque_prf_input_callback: *mut c_void,
+-            tlsext_opaque_prf_input_callback_arg: *mut c_void,
+-
+-            next_protos_advertised_cb: *mut c_void,
+-            next_protos_advertised_cb_arg: *mut c_void,
+-            next_proto_select_cb: *mut c_void,
+-            next_proto_select_cb_arg: *mut c_void,
+-
+-            srtp_profiles: *mut c_void,
+-        }
+     } else {
+         #[repr(C)]
+         pub struct SSL_CTX {
+@@ -988,7 +686,7 @@ cfg_if! {
+             ))]
+             next_proto_select_cb_arg: *mut c_void,
+ 
+-            #[cfg(all(not(osslconf = "OPENSSL_NO_TLSEXT"), ossl101))]
++            #[cfg(not(osslconf = "OPENSSL_NO_TLSEXT"))]
+             srtp_profiles: *mut c_void,
+             #[cfg(all(not(osslconf = "OPENSSL_NO_TLSEXT"), ossl102))]
+             alpn_select_cb: *mut c_void,
+@@ -1072,9 +770,9 @@ cfg_if! {
  pub enum COMP_CTX {}
  
  cfg_if! {
 -    if #[cfg(any(ossl110, libressl350))] {
-+    if #[cfg(all(any(ossl110, libressl350), not(osslconf = "OPENSSL_NO_COMP")))] {
++    if #[cfg(all(any(ossl110, libressl), not(osslconf = "OPENSSL_NO_COMP")))] {
          pub enum COMP_METHOD {}
 -    } else {
 +    } else if #[cfg(not(osslconf = "OPENSSL_NO_COMP"))] {
          #[repr(C)]
          pub struct COMP_METHOD {
              pub type_: c_int,
-@@ -1134,13 +1134,32 @@ pub enum OSSL_LIB_CTX {}
+@@ -1106,13 +804,8 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum CRYPTO_EX_DATA {}
+-    } else if #[cfg(libressl)] {
+-        #[repr(C)]
+-        pub struct CRYPTO_EX_DATA {
+-            pub sk: *mut stack_st_void,
+-        }
+     } else {
+         #[repr(C)]
+         pub struct CRYPTO_EX_DATA {
+@@ -1134,13 +827,37 @@ pub enum OSSL_LIB_CTX {}
  #[repr(C)]
  pub struct OSSL_PARAM {
      key: *const c_char,
@@ -1770,10 +3414,69 @@ index d465a4414..c4692b1bd 100644
 +        arg: *mut c_void,
 +    ) -> c_int,
 +>;
++
++#[cfg(ossl300)]
++pub enum EVP_MAC {}
++#[cfg(ossl300)]
++pub enum EVP_MAC_CTX {}
 diff --git a/src/handwritten/x509.rs b/src/handwritten/x509.rs
-index 0bb682764..8c56309f2 100644
+index 0bb6827..de7d5da 100644
 --- a/src/handwritten/x509.rs
 +++ b/src/handwritten/x509.rs
+@@ -28,7 +28,7 @@ pub enum X509_ATTRIBUTE {}
+ stack!(stack_st_X509_ATTRIBUTE);
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_REQ_INFO {}
+     } else {
+         #[repr(C)]
+@@ -43,7 +43,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_CRL {}
+     } else {
+         #[repr(C)]
+@@ -70,7 +70,7 @@ cfg_if! {
+ stack!(stack_st_X509_CRL);
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_CRL_INFO {}
+     } else {
+         #[repr(C)]
+@@ -88,7 +88,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_REVOKED {}
+     } else {
+         #[repr(C)]
+@@ -106,7 +106,7 @@ cfg_if! {
+ stack!(stack_st_X509_REVOKED);
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_REQ {}
+     } else {
+         #[repr(C)]
+@@ -120,7 +120,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum X509_CINF {}
+     } else {
+         #[repr(C)]
 @@ -169,15 +169,25 @@ const_ptr_api! {
          pub fn i2d_PUBKEY_bio(b: *mut BIO, x: #[const_ptr_if(ossl300)] EVP_PKEY) -> c_int;
  
@@ -1801,8 +3504,413 @@ index 0bb682764..8c56309f2 100644
      pub fn d2i_RSA_PUBKEY(k: *mut *mut RSA, buf: *mut *const u8, len: c_long) -> *mut RSA;
      pub fn d2i_DSA_PUBKEY(k: *mut *mut DSA, pp: *mut *const c_uchar, length: c_long) -> *mut DSA;
      pub fn d2i_EC_PUBKEY(
+@@ -195,12 +205,11 @@ extern "C" {
+ 
+ const_ptr_api! {
+     extern "C" {
+-        #[cfg(any(ossl102, libressl350))]
+         pub fn X509_ALGOR_get0(
+-            paobj: *mut #[const_ptr_if(any(ossl110, libressl350))] ASN1_OBJECT,
++            paobj: *mut #[const_ptr_if(any(ossl110, libressl))] ASN1_OBJECT,
+             pptype: *mut c_int,
+-            ppval: *mut #[const_ptr_if(any(ossl110, libressl350))] c_void,
+-            alg: #[const_ptr_if(any(ossl110, libressl350))] X509_ALGOR,
++            ppval: *mut #[const_ptr_if(any(ossl110, libressl))] c_void,
++            alg: #[const_ptr_if(any(ossl110, libressl))] X509_ALGOR,
+         );
+     }
+ }
+@@ -217,7 +226,7 @@ extern "C" {
+ }
+ const_ptr_api! {
+     extern "C" {
+-        #[cfg(any(ossl110, libressl270))]
++        #[cfg(any(ossl110, libressl))]
+         pub fn X509_REVOKED_dup(rev: #[const_ptr_if(ossl300)] X509_REVOKED) -> *mut X509_REVOKED;
+     }
+ }
+@@ -246,7 +255,7 @@ extern "C" {
+ const_ptr_api! {
+     extern "C" {
+         pub fn i2d_X509_CRL(x: #[const_ptr_if(ossl300)] X509_CRL, buf: *mut *mut u8) -> c_int;
+-        #[cfg(any(ossl110, libressl270))]
++        #[cfg(any(ossl110, libressl))]
+         pub fn X509_CRL_dup(x: #[const_ptr_if(ossl300)] X509_CRL) -> *mut X509_CRL;
+     }
+ }
+@@ -264,14 +273,13 @@ const_ptr_api! {
+     extern "C" {
+         pub fn i2d_X509_REQ(x: #[const_ptr_if(ossl300)] X509_REQ, buf: *mut *mut u8) -> c_int;
+ 
+-        #[cfg(any(ossl102, libressl273))]
+         pub fn X509_get0_signature(
+-            psig: *mut #[const_ptr_if(any(ossl110, libressl273))] ASN1_BIT_STRING,
+-            palg: *mut #[const_ptr_if(any(ossl110, libressl273))] X509_ALGOR,
++            psig: *mut #[const_ptr_if(any(ossl110, libressl))] ASN1_BIT_STRING,
++            palg: *mut #[const_ptr_if(any(ossl110, libressl))] X509_ALGOR,
+             x: *const X509,
+         );
+ 
+-        #[cfg(any(ossl110, libressl270))]
++        #[cfg(any(ossl110, libressl))]
+         pub fn X509_REQ_dup(x: #[const_ptr_if(ossl300)] X509_REQ) -> *mut X509_REQ;
+     }
+ }
+@@ -293,11 +301,10 @@ extern "C" {
+ const_ptr_api! {
+     extern "C" {
+         pub fn i2d_X509(x: #[const_ptr_if(ossl300)] X509, buf: *mut *mut u8) -> c_int;
+-        #[cfg(any(ossl110, libressl270))]
++        #[cfg(any(ossl110, libressl))]
+         pub fn X509_NAME_dup(x: #[const_ptr_if(ossl300)] X509_NAME) -> *mut X509_NAME;
+-        #[cfg(any(ossl110, libressl270))]
++        #[cfg(any(ossl110, libressl))]
+         pub fn X509_dup(x: #[const_ptr_if(ossl300)] X509) -> *mut X509;
+-        #[cfg(any(ossl101, libressl350))]
+         pub fn X509_NAME_add_entry(
+             name: *mut X509_NAME,
+             ne: #[const_ptr_if(any(ossl110, libressl))] X509_NAME_ENTRY,
+@@ -330,13 +337,13 @@ extern "C" {
+ }
+ const_ptr_api! {
+     extern "C" {
+-        pub fn X509_get_issuer_name(x: #[const_ptr_if(any(ossl110, libressl280))] X509) -> *mut X509_NAME;
++        pub fn X509_get_issuer_name(x: #[const_ptr_if(any(ossl110, libressl))] X509) -> *mut X509_NAME;
+         pub fn X509_set_subject_name(x: *mut X509, name: #[const_ptr_if(ossl300)] X509_NAME) -> c_int;
+-        pub fn X509_get_subject_name(x: #[const_ptr_if(any(ossl110, libressl280))] X509) -> *mut X509_NAME;
++        pub fn X509_get_subject_name(x: #[const_ptr_if(any(ossl110, libressl))] X509) -> *mut X509_NAME;
+     }
+ }
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn X509_set1_notBefore(x: *mut X509, tm: *const ASN1_TIME) -> c_int;
+             pub fn X509_set1_notAfter(x: *mut X509, tm: *const ASN1_TIME) -> c_int;
+@@ -349,10 +356,10 @@ cfg_if! {
+     }
+ }
+ extern "C" {
+-    #[cfg(any(ossl110, libressl350))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_REQ_get_version(req: *const X509_REQ) -> c_long;
+     pub fn X509_REQ_set_version(req: *mut X509_REQ, version: c_long) -> c_int;
+-    #[cfg(any(ossl110, libressl350))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_REQ_get_subject_name(req: *const X509_REQ) -> *mut X509_NAME;
+ }
+ const_ptr_api! {
+@@ -401,18 +408,18 @@ extern "C" {
+ extern "C" {
+     pub fn X509_set_pubkey(x: *mut X509, pkey: *mut EVP_PKEY) -> c_int;
+     pub fn X509_REQ_verify(req: *mut X509_REQ, pkey: *mut EVP_PKEY) -> c_int;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_getm_notBefore(x: *const X509) -> *mut ASN1_TIME;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_getm_notAfter(x: *const X509) -> *mut ASN1_TIME;
+-    #[cfg(any(ossl110, libressl273))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_up_ref(x: *mut X509) -> c_int;
+ 
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_REVOKED_get0_serialNumber(req: *const X509_REVOKED) -> *const ASN1_INTEGER;
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_REVOKED_get0_revocationDate(req: *const X509_REVOKED) -> *const ASN1_TIME;
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_REVOKED_get0_extensions(r: *const X509_REVOKED) -> *const stack_st_X509_EXTENSION;
+ 
+     pub fn X509_REVOKED_set_serialNumber(r: *mut X509_REVOKED, serial: *mut ASN1_INTEGER) -> c_int;
+@@ -443,13 +450,13 @@ const_ptr_api! {
+ }
+ 
+ extern "C" {
+-    #[cfg(any(ossl110, libressl281))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_CRL_get_REVOKED(crl: *mut X509_CRL) -> *mut stack_st_X509_REVOKED;
+-    #[cfg(any(ossl110, libressl281))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_CRL_get0_nextUpdate(x: *const X509_CRL) -> *const ASN1_TIME;
+-    #[cfg(any(ossl110, libressl281))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_CRL_get0_lastUpdate(x: *const X509_CRL) -> *const ASN1_TIME;
+-    #[cfg(any(ossl110, libressl281))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_CRL_get_issuer(x: *const X509_CRL) -> *mut X509_NAME;
+ 
+     #[cfg(ossl110)]
+@@ -465,18 +472,18 @@ const_ptr_api! {
+ extern "C" {
+     pub fn X509_CRL_sort(crl: *mut X509_CRL) -> c_int;
+ 
+-    #[cfg(any(ossl110, libressl270))]
++    #[cfg(any(ossl110, libressl))]
+     pub fn X509_CRL_up_ref(crl: *mut X509_CRL) -> c_int;
+     pub fn X509_CRL_add0_revoked(crl: *mut X509_CRL, rev: *mut X509_REVOKED) -> c_int;
+ }
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl270))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn X509_CRL_set1_lastUpdate(crl: *mut X509_CRL, tm: *const ASN1_TIME) -> c_int;
+             pub fn X509_CRL_set1_nextUpdate(crl: *mut X509_CRL, tm: *const ASN1_TIME) -> c_int;
+         }
+     } else {
+-        // libressl270 kept them, ossl110 "#define"s them to the variants above
++        // ossl110 "#define"s these to the variants above
+         extern "C" {
+             pub fn X509_CRL_set_lastUpdate(crl: *mut X509_CRL, tm: *const ASN1_TIME) -> c_int;
+             pub fn X509_CRL_set_nextUpdate(crl: *mut X509_CRL, tm: *const ASN1_TIME) -> c_int;
+@@ -486,21 +493,21 @@ cfg_if! {
+ 
+ const_ptr_api! {
+     extern "C" {
+-        pub fn X509_NAME_entry_count(n: #[const_ptr_if(any(ossl110, libressl280))] X509_NAME) -> c_int;
+-        pub fn X509_NAME_get_index_by_NID(n: #[const_ptr_if(any(ossl300, libressl280))] X509_NAME, nid: c_int, last_pos: c_int) -> c_int;
+-        pub fn X509_NAME_get_entry(n: #[const_ptr_if(any(ossl110, libressl280))] X509_NAME, loc: c_int) -> *mut X509_NAME_ENTRY;
++        pub fn X509_NAME_entry_count(n: #[const_ptr_if(any(ossl110, libressl))] X509_NAME) -> c_int;
++        pub fn X509_NAME_get_index_by_NID(n: #[const_ptr_if(any(ossl300, libressl))] X509_NAME, nid: c_int, last_pos: c_int) -> c_int;
++        pub fn X509_NAME_get_entry(n: #[const_ptr_if(any(ossl110, libressl))] X509_NAME, loc: c_int) -> *mut X509_NAME_ENTRY;
+         pub fn X509_NAME_add_entry_by_NID(
+             x: *mut X509_NAME,
+             field: c_int,
+             ty: c_int,
+-            bytes: #[const_ptr_if(any(ossl110, libressl280))] c_uchar,
++            bytes: #[const_ptr_if(any(ossl110, libressl))] c_uchar,
+             len: c_int,
+             loc: c_int,
+             set: c_int,
+         ) -> c_int;
+         pub fn i2d_X509_NAME(n: #[const_ptr_if(ossl300)] X509_NAME, buf: *mut *mut u8) -> c_int;
+-        pub fn X509_NAME_ENTRY_get_object(ne: #[const_ptr_if(any(ossl110, libressl280))] X509_NAME_ENTRY) -> *mut ASN1_OBJECT;
+-        pub fn X509_NAME_ENTRY_get_data(ne: #[const_ptr_if(any(ossl110, libressl280))] X509_NAME_ENTRY) -> *mut ASN1_STRING;
++        pub fn X509_NAME_ENTRY_get_object(ne: #[const_ptr_if(any(ossl110, libressl))] X509_NAME_ENTRY) -> *mut ASN1_OBJECT;
++        pub fn X509_NAME_ENTRY_get_data(ne: #[const_ptr_if(any(ossl110, libressl))] X509_NAME_ENTRY) -> *mut ASN1_STRING;
+     }
+ }
+ extern "C" {
+@@ -599,47 +606,47 @@ const_ptr_api! {
+ const_ptr_api! {
+     extern "C" {
+         // in X509
+-        pub fn X509_get_ext_count(x: #[const_ptr_if(any(ossl110, libressl280))] X509) -> c_int;
+-        pub fn X509_get_ext_by_NID(x: #[const_ptr_if(any(ossl110, libressl280))] X509, nid: c_int, lastpos: c_int) -> c_int;
+-        pub fn X509_get_ext_by_OBJ(x: #[const_ptr_if(any(ossl110, libressl280))] X509, obj: #[const_ptr_if(any(ossl110, libressl280))] ASN1_OBJECT, lastpos: c_int) -> c_int;
+-        pub fn X509_get_ext_by_critical(x: #[const_ptr_if(any(ossl110, libressl280))] X509, crit: c_int, lastpos: c_int) -> c_int;
+-        pub fn X509_get_ext(x: #[const_ptr_if(any(ossl110, libressl280))] X509, loc: c_int) -> *mut X509_EXTENSION;
++        pub fn X509_get_ext_count(x: #[const_ptr_if(any(ossl110, libressl))] X509) -> c_int;
++        pub fn X509_get_ext_by_NID(x: #[const_ptr_if(any(ossl110, libressl))] X509, nid: c_int, lastpos: c_int) -> c_int;
++        pub fn X509_get_ext_by_OBJ(x: #[const_ptr_if(any(ossl110, libressl))] X509, obj: #[const_ptr_if(any(ossl110, libressl))] ASN1_OBJECT, lastpos: c_int) -> c_int;
++        pub fn X509_get_ext_by_critical(x: #[const_ptr_if(any(ossl110, libressl))] X509, crit: c_int, lastpos: c_int) -> c_int;
++        pub fn X509_get_ext(x: #[const_ptr_if(any(ossl110, libressl))] X509, loc: c_int) -> *mut X509_EXTENSION;
+         pub fn X509_get_ext_d2i(
+-            x: #[const_ptr_if(any(ossl110, libressl280))] X509,
++            x: #[const_ptr_if(any(ossl110, libressl))] X509,
+             nid: c_int,
+             crit: *mut c_int,
+             idx: *mut c_int,
+         ) -> *mut c_void;
+         // in X509_CRL
+-        pub fn X509_CRL_get_ext_count(x: #[const_ptr_if(any(ossl110, libressl280))] X509_CRL) -> c_int;
+-        pub fn X509_CRL_get_ext_by_NID(x: #[const_ptr_if(any(ossl110, libressl280))] X509_CRL, nid: c_int, lastpos: c_int) -> c_int;
+-        pub fn X509_CRL_get_ext_by_OBJ(x: #[const_ptr_if(any(ossl110, libressl280))] X509_CRL, obj: #[const_ptr_if(any(ossl110, libressl280))] ASN1_OBJECT, lastpos: c_int) -> c_int;
+-        pub fn X509_CRL_get_ext_by_critical(x: #[const_ptr_if(any(ossl110, libressl280))] X509_CRL, crit: c_int, lastpos: c_int) -> c_int;
+-        pub fn X509_CRL_get_ext(x: #[const_ptr_if(any(ossl110, libressl280))] X509_CRL, loc: c_int) -> *mut X509_EXTENSION;
++        pub fn X509_CRL_get_ext_count(x: #[const_ptr_if(any(ossl110, libressl))] X509_CRL) -> c_int;
++        pub fn X509_CRL_get_ext_by_NID(x: #[const_ptr_if(any(ossl110, libressl))] X509_CRL, nid: c_int, lastpos: c_int) -> c_int;
++        pub fn X509_CRL_get_ext_by_OBJ(x: #[const_ptr_if(any(ossl110, libressl))] X509_CRL, obj: #[const_ptr_if(any(ossl110, libressl))] ASN1_OBJECT, lastpos: c_int) -> c_int;
++        pub fn X509_CRL_get_ext_by_critical(x: #[const_ptr_if(any(ossl110, libressl))] X509_CRL, crit: c_int, lastpos: c_int) -> c_int;
++        pub fn X509_CRL_get_ext(x: #[const_ptr_if(any(ossl110, libressl))] X509_CRL, loc: c_int) -> *mut X509_EXTENSION;
+         pub fn X509_CRL_get_ext_d2i(
+-            x: #[const_ptr_if(any(ossl110, libressl280))] X509_CRL,
++            x: #[const_ptr_if(any(ossl110, libressl))] X509_CRL,
+             nid: c_int,
+             crit: *mut c_int,
+             idx: *mut c_int,
+         ) -> *mut c_void;
+         // in X509_REVOKED
+-        pub fn X509_REVOKED_get_ext_count(x: #[const_ptr_if(any(ossl110, libressl280))] X509_REVOKED) -> c_int;
+-        pub fn X509_REVOKED_get_ext_by_NID(x: #[const_ptr_if(any(ossl110, libressl280))] X509_REVOKED, nid: c_int, lastpos: c_int) -> c_int;
+-        pub fn X509_REVOKED_get_ext_by_OBJ(x: #[const_ptr_if(any(ossl110, libressl280))] X509_REVOKED, obj: #[const_ptr_if(any(ossl110, libressl280))] ASN1_OBJECT, lastpos: c_int) -> c_int;
+-        pub fn X509_REVOKED_get_ext_by_critical(x: #[const_ptr_if(any(ossl110, libressl280))] X509_REVOKED, crit: c_int, lastpos: c_int) -> c_int;
+-        pub fn X509_REVOKED_get_ext(x: #[const_ptr_if(any(ossl110, libressl280))] X509_REVOKED, loc: c_int) -> *mut X509_EXTENSION;
++        pub fn X509_REVOKED_get_ext_count(x: #[const_ptr_if(any(ossl110, libressl))] X509_REVOKED) -> c_int;
++        pub fn X509_REVOKED_get_ext_by_NID(x: #[const_ptr_if(any(ossl110, libressl))] X509_REVOKED, nid: c_int, lastpos: c_int) -> c_int;
++        pub fn X509_REVOKED_get_ext_by_OBJ(x: #[const_ptr_if(any(ossl110, libressl))] X509_REVOKED, obj: #[const_ptr_if(any(ossl110, libressl))] ASN1_OBJECT, lastpos: c_int) -> c_int;
++        pub fn X509_REVOKED_get_ext_by_critical(x: #[const_ptr_if(any(ossl110, libressl))] X509_REVOKED, crit: c_int, lastpos: c_int) -> c_int;
++        pub fn X509_REVOKED_get_ext(x: #[const_ptr_if(any(ossl110, libressl))] X509_REVOKED, loc: c_int) -> *mut X509_EXTENSION;
+         pub fn X509_REVOKED_get_ext_d2i(
+-            x: #[const_ptr_if(any(ossl110, libressl280))] X509_REVOKED,
++            x: #[const_ptr_if(any(ossl110, libressl))] X509_REVOKED,
+             nid: c_int,
+             crit: *mut c_int,
+             idx: *mut c_int,
+         ) -> *mut c_void;
+         // X509_EXTENSION stack
+-        pub fn X509v3_get_ext_by_OBJ(x: *const stack_st_X509_EXTENSION, obj: #[const_ptr_if(any(ossl110, libressl280))] ASN1_OBJECT, lastpos: c_int) -> c_int;
++        pub fn X509v3_get_ext_by_OBJ(x: *const stack_st_X509_EXTENSION, obj: #[const_ptr_if(any(ossl110, libressl))] ASN1_OBJECT, lastpos: c_int) -> c_int;
+         // X509_EXTENSION itself
+-        pub fn X509_EXTENSION_create_by_OBJ(ex: *mut *mut X509_EXTENSION, obj: #[const_ptr_if(any(ossl110, libressl280))] ASN1_OBJECT, crit: c_int, data: *mut ASN1_OCTET_STRING) -> *mut X509_EXTENSION;
+-        pub fn X509_EXTENSION_set_object(ex: *mut X509_EXTENSION, obj: #[const_ptr_if(any(ossl110, libressl280))] ASN1_OBJECT) -> c_int;
+-        pub fn X509_EXTENSION_get_critical(ex: #[const_ptr_if(any(ossl110, libressl280))] X509_EXTENSION) -> c_int;
++        pub fn X509_EXTENSION_create_by_OBJ(ex: *mut *mut X509_EXTENSION, obj: #[const_ptr_if(any(ossl110, libressl))] ASN1_OBJECT, crit: c_int, data: *mut ASN1_OCTET_STRING) -> *mut X509_EXTENSION;
++        pub fn X509_EXTENSION_set_object(ex: *mut X509_EXTENSION, obj: #[const_ptr_if(any(ossl110, libressl))] ASN1_OBJECT) -> c_int;
++        pub fn X509_EXTENSION_get_critical(ex: #[const_ptr_if(any(ossl110, libressl))] X509_EXTENSION) -> c_int;
+     }
+ }
+ 
+@@ -649,20 +656,20 @@ extern "C" {
+ 
+ const_ptr_api! {
+     extern "C" {
+-        #[cfg(any(ossl110, libressl270))]
++        #[cfg(any(ossl110, libressl))]
+         pub fn X509_STORE_get0_objects(ctx: #[const_ptr_if(ossl300)] X509_STORE) -> *mut stack_st_X509_OBJECT;
+         #[cfg(ossl300)]
+         pub fn X509_STORE_get1_all_certs(ctx: *mut X509_STORE) -> *mut stack_st_X509;
+     }
+ }
+ 
+-#[cfg(any(ossl110, libressl270))]
++#[cfg(any(ossl110, libressl))]
+ extern "C" {
+     pub fn X509_OBJECT_get0_X509(x: *const X509_OBJECT) -> *mut X509;
+ }
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         extern "C" {
+             pub fn X509_OBJECT_free(a: *mut X509_OBJECT);
+         }
+@@ -714,8 +721,8 @@ cfg_if! {
+ 
+ const_ptr_api! {
+     extern "C" {
+-        pub fn X509_PURPOSE_get_by_sname(sname: #[const_ptr_if(any(ossl110, libressl280))] c_char) -> c_int;
+-        pub fn X509_PURPOSE_get_id(purpose: #[const_ptr_if(any(ossl110, libressl280))] X509_PURPOSE) -> c_int;
++        pub fn X509_PURPOSE_get_by_sname(sname: #[const_ptr_if(any(ossl110, libressl))] c_char) -> c_int;
++        pub fn X509_PURPOSE_get_id(purpose: #[const_ptr_if(any(ossl110, libressl))] X509_PURPOSE) -> c_int;
+         pub fn X509_PURPOSE_get0(idx: c_int) -> #[const_ptr_if(libressl390)] X509_PURPOSE;
+     }
+ }
+@@ -773,7 +780,7 @@ extern "C" {
+ const_ptr_api! {
+     extern "C" {
+         pub fn X509_ATTRIBUTE_count(
+-            attr: #[const_ptr_if(any(ossl110, libressl280))] X509_ATTRIBUTE // const since OpenSSL v1.1.0
++            attr: #[const_ptr_if(any(ossl110, libressl))] X509_ATTRIBUTE // const since OpenSSL v1.1.0
+         ) -> c_int;
+         pub fn i2d_X509_ATTRIBUTE(x: #[const_ptr_if(ossl300)] X509_ATTRIBUTE, buf: *mut *mut u8) -> c_int;
+         pub fn X509_ATTRIBUTE_dup(x: #[const_ptr_if(ossl300)] X509_ATTRIBUTE) -> *mut X509_ATTRIBUTE;
+diff --git a/src/handwritten/x509_vfy.rs b/src/handwritten/x509_vfy.rs
+index 31928f8..50ef057 100644
+--- a/src/handwritten/x509_vfy.rs
++++ b/src/handwritten/x509_vfy.rs
+@@ -74,7 +74,7 @@ extern "C" {
+     pub fn X509_STORE_CTX_set_error(ctx: *mut X509_STORE_CTX, error: c_int);
+ }
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl350))] {
++    if #[cfg(any(ossl110, libressl))] {
+         const_ptr_api! {
+             extern "C" {
+                 pub fn X509_STORE_CTX_get0_chain(ctx: #[const_ptr_if(ossl300)] X509_STORE_CTX) -> *mut stack_st_X509;
+@@ -88,45 +88,34 @@ cfg_if! {
+ }
+ 
+ extern "C" {
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_new() -> *mut X509_VERIFY_PARAM;
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_free(param: *mut X509_VERIFY_PARAM);
+ 
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_set_flags(param: *mut X509_VERIFY_PARAM, flags: c_ulong) -> c_int;
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_clear_flags(param: *mut X509_VERIFY_PARAM, flags: c_ulong) -> c_int;
+ 
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_set_time(param: *mut X509_VERIFY_PARAM, t: time_t);
+ 
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_set_depth(param: *mut X509_VERIFY_PARAM, depth: c_int);
+ }
+ const_ptr_api! {
+     extern "C" {
+-        #[cfg(any(ossl102, libressl261))]
+         pub fn X509_VERIFY_PARAM_get_flags(param: #[const_ptr_if(ossl300)] X509_VERIFY_PARAM) -> c_ulong;
+     }
+ }
+ 
+ extern "C" {
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_set1_host(
+         param: *mut X509_VERIFY_PARAM,
+         name: *const c_char,
+         namelen: size_t,
+     ) -> c_int;
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_set_hostflags(param: *mut X509_VERIFY_PARAM, flags: c_uint);
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_set1_email(
+         param: *mut X509_VERIFY_PARAM,
+         email: *const c_char,
+         emaillen: size_t,
+     ) -> c_int;
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn X509_VERIFY_PARAM_set1_ip(
+         param: *mut X509_VERIFY_PARAM,
+         ip: *const c_uchar,
+@@ -136,6 +125,5 @@ extern "C" {
+     pub fn X509_VERIFY_PARAM_set_auth_level(param: *mut X509_VERIFY_PARAM, lvl: c_int);
+     #[cfg(ossl110)]
+     pub fn X509_VERIFY_PARAM_get_auth_level(param: *const X509_VERIFY_PARAM) -> c_int;
+-    #[cfg(ossl102)]
+     pub fn X509_VERIFY_PARAM_set_purpose(param: *mut X509_VERIFY_PARAM, purpose: c_int) -> c_int;
+ }
+diff --git a/src/handwritten/x509v3.rs b/src/handwritten/x509v3.rs
+index 1a548c0..05093ef 100644
+--- a/src/handwritten/x509v3.rs
++++ b/src/handwritten/x509v3.rs
+@@ -42,13 +42,13 @@ const_ptr_api! {
+             conf: *mut CONF,
+             ctx: *mut X509V3_CTX,
+             ext_nid: c_int,
+-            value: #[const_ptr_if(any(ossl110, libressl280))] c_char,
++            value: #[const_ptr_if(any(ossl110, libressl))] c_char,
+         ) -> *mut X509_EXTENSION;
+         pub fn X509V3_EXT_nconf(
+             conf: *mut CONF,
+             ctx: *mut X509V3_CTX,
+-            name: #[const_ptr_if(any(ossl110, libressl280))] c_char,
+-            value: #[const_ptr_if(any(ossl110, libressl280))] c_char,
++            name: #[const_ptr_if(any(ossl110, libressl))] c_char,
++            value: #[const_ptr_if(any(ossl110, libressl))] c_char,
+         ) -> *mut X509_EXTENSION;
+     }
+ }
+@@ -74,12 +74,12 @@ extern "C" {
+ const_ptr_api! {
+     extern "C" {
+         pub fn X509V3_get_d2i(
+-            x: #[const_ptr_if(any(ossl110, libressl280))] stack_st_X509_EXTENSION,
++            x: #[const_ptr_if(any(ossl110, libressl))] stack_st_X509_EXTENSION,
+             nid: c_int,
+             crit: *mut c_int,
+             idx: *mut c_int,
+         ) -> *mut c_void;
+-        pub fn X509V3_extensions_print(out: *mut BIO, title: #[const_ptr_if(any(ossl110, libressl280))] c_char, exts: #[const_ptr_if(any(ossl110, libressl280))] stack_st_X509_EXTENSION, flag: c_ulong, indent: c_int) -> c_int;
++        pub fn X509V3_extensions_print(out: *mut BIO, title: #[const_ptr_if(any(ossl110, libressl))] c_char, exts: #[const_ptr_if(any(ossl110, libressl))] stack_st_X509_EXTENSION, flag: c_ulong, indent: c_int) -> c_int;
+     }
+ }
+ 
 diff --git a/src/lib.rs b/src/lib.rs
-index 0e8923bac..832adf9ae 100644
+index 0e8923b..cc99e0a 100644
 --- a/src/lib.rs
 +++ b/src/lib.rs
 @@ -35,10 +35,13 @@ extern crate aws_lc_sys;
@@ -1845,7 +3953,19 @@ index 0e8923bac..832adf9ae 100644
      mod dtls1;
      mod ec;
      mod err;
-@@ -164,12 +175,12 @@ mod openssl {
+@@ -147,7 +158,10 @@ mod openssl {
+         })
+     }
+ 
+-    #[cfg(not(ossl110))]
++    #[cfg(libressl)]
++    pub fn init() {}
++
++    #[cfg(not(any(ossl110, libressl)))]
+     pub fn init() {
+         use std::io::{self, Write};
+         use std::mem;
+@@ -164,12 +178,12 @@ mod openssl {
              _file: *const c_char,
              _line: c_int,
          ) {
@@ -1861,8 +3981,103 @@ index 0e8923bac..832adf9ae 100644
                      let _ = writeln!(
                          io::stderr(),
                          "BUG: rust-openssl lock {} already unlocked, aborting",
+diff --git a/src/macros.rs b/src/macros.rs
+index e1c1427..ec6ac46 100644
+--- a/src/macros.rs
++++ b/src/macros.rs
+@@ -97,7 +97,7 @@ macro_rules! stack {
+ macro_rules! const_ptr_api {
+     // ----------------------------------------------------------------
+     // (partialarg): partial argument, waiting for "final" argument type
+-    // MAGIC PART 1: hande conditional const ptr in argument type
++    // MAGIC PART 1: handle conditional const ptr in argument type
+     ( (partialarg)
+         { $(#[$fn_attr:meta])* pub fn $fn_name:ident }
+         $args_packed:tt
+@@ -181,7 +181,7 @@ macro_rules! const_ptr_api {
+ 
+     // ----------------------------------------------------------------
+     // (partialret): have partial return type, waiting for final return type
+-    // MAGIC PART 2: hande conditional const ptr in return type
++    // MAGIC PART 2: handle conditional const ptr in return type
+     ( (partialret)
+         { $(#[$fn_attr:meta])* pub fn $fn_name:ident }
+         $args_packed:tt
+diff --git a/src/obj_mac.rs b/src/obj_mac.rs
+index 8dd720a..2be9e73 100644
+--- a/src/obj_mac.rs
++++ b/src/obj_mac.rs
+@@ -956,39 +956,39 @@ pub const NID_ED448: c_int = 1088;
+ pub const NID_sm2: c_int = 1172;
+ #[cfg(ossl111)]
+ pub const NID_sm3: c_int = 1143;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm3: c_int = 968;
+ #[cfg(ossl111)]
+ pub const NID_sm3WithRSAEncryption: c_int = 1144;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm3WithRSAEncryption: c_int = 969;
+ #[cfg(ossl111)]
+ pub const NID_sm4_ecb: c_int = 1133;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm4_ecb: c_int = 973;
+ #[cfg(ossl111)]
+ pub const NID_sm4_cbc: c_int = 1134;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm4_cbc: c_int = 974;
+ #[cfg(ossl111)]
+ pub const NID_sm4_ofb128: c_int = 1135;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm4_ofb128: c_int = 975;
+ #[cfg(ossl111)]
+ pub const NID_sm4_cfb128: c_int = 1137;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm4_cfb128: c_int = 976;
+ #[cfg(ossl111)]
+ pub const NID_sm4_cfb1: c_int = 1136;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm4_cfb1: c_int = 977;
+ #[cfg(ossl111)]
+ pub const NID_sm4_cfb8: c_int = 1138;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm4_cfb8: c_int = 978;
+ #[cfg(ossl111)]
+ pub const NID_sm4_ctr: c_int = 1139;
+-#[cfg(libressl291)]
++#[cfg(libressl)]
+ pub const NID_sm4_ctr: c_int = 979;
+ #[cfg(ossl111)]
+ pub const NID_sha3_224: c_int = 1096;
+@@ -1012,7 +1012,7 @@ pub const NID_shake128: c_int = 1100;
+ pub const NID_shake256: c_int = 1101;
+ #[cfg(ossl110)]
+ pub const NID_chacha20_poly1305: c_int = 1018;
+-#[cfg(libressl271)]
++#[cfg(libressl)]
+ pub const NID_chacha20_poly1305: c_int = 967;
+ cfg_if! {
+     if #[cfg(ossl340)] {
+diff --git a/src/pkcs7.rs b/src/pkcs7.rs
+index 0a56225..6b24426 100644
+--- a/src/pkcs7.rs
++++ b/src/pkcs7.rs
+@@ -16,5 +16,5 @@ pub const PKCS7_STREAM: c_int = 0x1000;
+ pub const PKCS7_NOCRL: c_int = 0x2000;
+ pub const PKCS7_PARTIAL: c_int = 0x4000;
+ pub const PKCS7_REUSE_DIGEST: c_int = 0x8000;
+-#[cfg(not(any(ossl101, ossl102, libressl)))]
++#[cfg(ossl110)]
+ pub const PKCS7_NO_DUAL_CONTENT: c_int = 0x10000;
 diff --git a/src/rsa.rs b/src/rsa.rs
-index 64107cd6b..36b8564ec 100644
+index 64107cd..5a1052b 100644
 --- a/src/rsa.rs
 +++ b/src/rsa.rs
 @@ -7,6 +7,26 @@ pub const RSA_F4: c_long = 0x10001;
@@ -1892,7 +4107,23 @@ index 64107cd6b..36b8564ec 100644
          pub unsafe fn EVP_PKEY_CTX_set_rsa_padding(ctx: *mut EVP_PKEY_CTX, pad: c_int) -> c_int {
              EVP_PKEY_CTX_ctrl(
                  ctx,
-@@ -82,6 +102,8 @@ pub unsafe fn EVP_PKEY_CTX_set0_rsa_oaep_label(
+@@ -52,7 +72,6 @@ cfg_if! {
+     }
+ }
+ 
+-#[cfg(any(ossl102, libressl310))]
+ pub unsafe fn EVP_PKEY_CTX_set_rsa_oaep_md(ctx: *mut EVP_PKEY_CTX, md: *mut EVP_MD) -> c_int {
+     EVP_PKEY_CTX_ctrl(
+         ctx,
+@@ -64,7 +83,6 @@ pub unsafe fn EVP_PKEY_CTX_set_rsa_oaep_md(ctx: *mut EVP_PKEY_CTX, md: *mut EVP_
+     )
+ }
+ 
+-#[cfg(any(ossl102, libressl310))]
+ pub unsafe fn EVP_PKEY_CTX_set0_rsa_oaep_label(
+     ctx: *mut EVP_PKEY_CTX,
+     label: *mut c_void,
+@@ -82,14 +100,14 @@ pub unsafe fn EVP_PKEY_CTX_set0_rsa_oaep_label(
  
  pub const EVP_PKEY_CTRL_RSA_PADDING: c_int = EVP_PKEY_ALG_CTRL + 1;
  pub const EVP_PKEY_CTRL_RSA_PSS_SALTLEN: c_int = EVP_PKEY_ALG_CTRL + 2;
@@ -1901,11 +4132,144 @@ index 64107cd6b..36b8564ec 100644
  
  pub const EVP_PKEY_CTRL_RSA_MGF1_MD: c_int = EVP_PKEY_ALG_CTRL + 5;
  
+ pub const EVP_PKEY_CTRL_GET_RSA_PADDING: c_int = EVP_PKEY_ALG_CTRL + 6;
+ 
+-#[cfg(any(ossl102, libressl310))]
+ pub const EVP_PKEY_CTRL_RSA_OAEP_MD: c_int = EVP_PKEY_ALG_CTRL + 9;
+-#[cfg(any(ossl102, libressl310))]
+ pub const EVP_PKEY_CTRL_RSA_OAEP_LABEL: c_int = EVP_PKEY_ALG_CTRL + 10;
+ 
+ pub const RSA_PKCS1_PADDING: c_int = 1;
 diff --git a/src/ssl.rs b/src/ssl.rs
-index 38d2184b4..407945404 100644
+index 38d2184..058ce7d 100644
 --- a/src/ssl.rs
 +++ b/src/ssl.rs
-@@ -315,7 +315,9 @@ pub const SSL_ERROR_WANT_CLIENT_HELLO_CB: c_int = 11;
+@@ -74,13 +74,13 @@ cfg_if! {
+ 
+ pub const SSL_OP_LEGACY_SERVER_CONNECT: ssl_op_type!() = 0x00000004;
+ cfg_if! {
+-    if #[cfg(libressl261)] {
++    if #[cfg(libressl)] {
+         pub const SSL_OP_TLSEXT_PADDING: ssl_op_type!() = 0x0;
+-    } else if #[cfg(any(ossl102, libressl))] {
++    } else if #[cfg(ossl102)] {
+         pub const SSL_OP_TLSEXT_PADDING: ssl_op_type!() = 0x10;
+     }
+ }
+-#[cfg(ossl101)]
++#[cfg(ossl102)]
+ pub const SSL_OP_SAFARI_ECDHE_ECDSA_BUG: ssl_op_type!() = 0x00000040;
+ 
+ pub const SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS: ssl_op_type!() = 0x00000800;
+@@ -89,7 +89,7 @@ pub const SSL_OP_NO_QUERY_MTU: ssl_op_type!() = 0x00001000;
+ pub const SSL_OP_COOKIE_EXCHANGE: ssl_op_type!() = 0x00002000;
+ pub const SSL_OP_NO_TICKET: ssl_op_type!() = 0x00004000;
+ cfg_if! {
+-    if #[cfg(ossl101)] {
++    if #[cfg(ossl102)] {
+         pub const SSL_OP_CISCO_ANYCONNECT: ssl_op_type!() = 0x00008000;
+     } else {
+         pub const SSL_OP_CISCO_ANYCONNECT: ssl_op_type!() = 0x0;
+@@ -98,7 +98,7 @@ cfg_if! {
+ 
+ pub const SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION: ssl_op_type!() = 0x00010000;
+ cfg_if! {
+-    if #[cfg(ossl101)] {
++    if #[cfg(ossl102)] {
+         pub const SSL_OP_NO_COMPRESSION: ssl_op_type!() = 0x00020000;
+         pub const SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION: ssl_op_type!() = 0x00040000;
+     } else {
+@@ -114,7 +114,7 @@ pub const SSL_OP_PRIORITIZE_CHACHA: ssl_op_type!() = 0x00200000;
+ 
+ pub const SSL_OP_CIPHER_SERVER_PREFERENCE: ssl_op_type!() = 0x00400000;
+ cfg_if! {
+-    if #[cfg(libressl280)] {
++    if #[cfg(libressl)] {
+         pub const SSL_OP_TLS_ROLLBACK_BUG: ssl_op_type!() = 0;
+     } else {
+         pub const SSL_OP_TLS_ROLLBACK_BUG: ssl_op_type!() = 0x00800000;
+@@ -122,7 +122,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(ossl101)] {
++    if #[cfg(ossl102)] {
+         pub const SSL_OP_NO_SSLv3: ssl_op_type!() = 0x02000000;
+     } else {
+         pub const SSL_OP_NO_SSLv3: ssl_op_type!() = 0x0;
+@@ -136,12 +136,12 @@ cfg_if! {
+     if #[cfg(ossl102)] {
+         pub const SSL_OP_NO_DTLSv1: ssl_op_type!() = 0x04000000;
+         pub const SSL_OP_NO_DTLSv1_2: ssl_op_type!() = 0x08000000;
+-    } else if #[cfg(libressl332)] {
++    } else if #[cfg(libressl)] {
+         pub const SSL_OP_NO_DTLSv1: ssl_op_type!() = 0x40000000;
+         pub const SSL_OP_NO_DTLSv1_2: ssl_op_type!() = 0x80000000;
+     }
+ }
+-#[cfg(any(ossl111, libressl340))]
++#[cfg(any(ossl111, libressl))]
+ pub const SSL_OP_NO_TLSv1_3: ssl_op_type!() = 0x20000000;
+ 
+ #[cfg(ossl110h)]
+@@ -162,7 +162,7 @@ cfg_if! {
+ }
+ 
+ cfg_if! {
+-    if #[cfg(libressl261)] {
++    if #[cfg(libressl)] {
+         pub const SSL_OP_CRYPTOPRO_TLSEXT_BUG: ssl_op_type!() = 0x0;
+     } else {
+         pub const SSL_OP_CRYPTOPRO_TLSEXT_BUG: ssl_op_type!() = 0x80000000;
+@@ -181,10 +181,8 @@ cfg_if! {
+             | SSL_OP_LEGACY_SERVER_CONNECT
+             | SSL_OP_TLSEXT_PADDING
+             | SSL_OP_SAFARI_ECDHE_ECDSA_BUG;
+-    } else if #[cfg(libressl261)] {
+-        pub const SSL_OP_ALL: ssl_op_type!() = 0x4;
+     } else if #[cfg(libressl)] {
+-        pub const SSL_OP_ALL: ssl_op_type!() = 0x80000014;
++        pub const SSL_OP_ALL: ssl_op_type!() = 0x4;
+     } else {
+         pub const SSL_OP_ALL: ssl_op_type!() = 0x80000BFF;
+     }
+@@ -202,7 +200,7 @@ cfg_if! {
+         pub const SSL_OP_SINGLE_ECDH_USE: ssl_op_type!() = 0x00000000;
+         pub const SSL_OP_SINGLE_DH_USE: ssl_op_type!() = 0x00000000;
+         pub const SSL_OP_NO_SSLv2: ssl_op_type!() = 0x00000000;
+-    } else if #[cfg(ossl101)] {
++    } else if #[cfg(ossl102)] {
+         pub const SSL_OP_MICROSOFT_SESS_ID_BUG: ssl_op_type!() = 0x00000001;
+         pub const SSL_OP_NETSCAPE_CHALLENGE_BUG: ssl_op_type!() = 0x00000002;
+         pub const SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG: ssl_op_type!() = 0x00000008;
+@@ -221,10 +219,8 @@ cfg_if! {
+         pub const SSL_OP_SSLEAY_080_CLIENT_DH_BUG: ssl_op_type!() = 0x0;
+         pub const SSL_OP_TLS_D5_BUG: ssl_op_type!() = 0x0;
+         pub const SSL_OP_TLS_BLOCK_PADDING_BUG: ssl_op_type!() = 0x0;
+-        #[cfg(libressl261)]
++        #[cfg(libressl)]
+         pub const SSL_OP_SINGLE_ECDH_USE: ssl_op_type!() = 0x0;
+-        #[cfg(not(libressl261))]
+-        pub const SSL_OP_SINGLE_ECDH_USE: ssl_op_type!() = 0x00080000;
+         pub const SSL_OP_SINGLE_DH_USE: ssl_op_type!() = 0x00100000;
+         pub const SSL_OP_NO_SSLv2: ssl_op_type!() = 0x0;
+     }
+@@ -235,11 +231,11 @@ pub const SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER: c_long = 0x2;
+ pub const SSL_MODE_AUTO_RETRY: c_long = 0x4;
+ pub const SSL_MODE_NO_AUTO_CHAIN: c_long = 0x8;
+ pub const SSL_MODE_RELEASE_BUFFERS: c_long = 0x10;
+-#[cfg(ossl101)]
++#[cfg(ossl102)]
+ pub const SSL_MODE_SEND_CLIENTHELLO_TIME: c_long = 0x20;
+-#[cfg(ossl101)]
++#[cfg(ossl102)]
+ pub const SSL_MODE_SEND_SERVERHELLO_TIME: c_long = 0x40;
+-#[cfg(ossl101)]
++#[cfg(ossl102)]
+ pub const SSL_MODE_SEND_FALLBACK_SCSV: c_long = 0x80;
+ 
+ pub unsafe fn SSL_CTX_set_mode(ctx: *mut SSL_CTX, op: c_long) -> c_long {
+@@ -315,13 +311,15 @@ pub const SSL_ERROR_WANT_CLIENT_HELLO_CB: c_int = 11;
  pub const SSL_VERIFY_NONE: c_int = 0;
  pub const SSL_VERIFY_PEER: c_int = 1;
  pub const SSL_VERIFY_FAIL_IF_NO_PEER_CERT: c_int = 2;
@@ -1913,18 +4277,50 @@ index 38d2184b4..407945404 100644
  pub const SSL_CTRL_SET_TMP_DH: c_int = 3;
 +#[cfg(not(osslconf = "OPENSSL_NO_DEPRECATED_3_0"))]
  pub const SSL_CTRL_SET_TMP_ECDH: c_int = 4;
- #[cfg(any(libressl, all(ossl101, not(ossl110))))]
+-#[cfg(any(libressl, all(ossl101, not(ossl110))))]
++#[cfg(any(libressl, all(ossl102, not(ossl110))))]
  pub const SSL_CTRL_GET_SESSION_REUSED: c_int = 8;
-@@ -352,6 +354,8 @@ pub const SSL_CTRL_SET_VERIFY_CERT_STORE: c_int = 106;
+ pub const SSL_CTRL_EXTRA_CHAIN_CERT: c_int = 14;
+ pub const SSL_CTRL_SET_MTU: c_int = 17;
+-#[cfg(any(libressl, all(ossl101, not(ossl110))))]
++#[cfg(any(libressl, all(ossl102, not(ossl110))))]
+ pub const SSL_CTRL_OPTIONS: c_int = 32;
+ pub const SSL_CTRL_MODE: c_int = 33;
+ pub const SSL_CTRL_SET_READ_AHEAD: c_int = 41;
+@@ -336,12 +334,12 @@ pub const SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG: c_int = 64;
+ pub const SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE: c_int = 65;
+ pub const SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP: c_int = 70;
+ pub const SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP: c_int = 71;
+-#[cfg(any(libressl, all(ossl101, not(ossl110))))]
++#[cfg(any(libressl, all(ossl102, not(ossl110))))]
+ pub const SSL_CTRL_CLEAR_OPTIONS: c_int = 77;
+ pub const SSL_CTRL_GET_EXTRA_CHAIN_CERTS: c_int = 82;
+ #[cfg(ossl102)]
+ pub const SSL_CTRL_CHAIN_CERT: c_int = 89;
+-#[cfg(any(ossl111, libressl252))]
++#[cfg(any(ossl111, libressl))]
+ pub const SSL_CTRL_SET_GROUPS_LIST: c_int = 92;
+ #[cfg(any(libressl, all(ossl102, not(ossl110))))]
+ pub const SSL_CTRL_SET_ECDH_AUTO: c_int = 94;
+@@ -352,34 +350,50 @@ pub const SSL_CTRL_SET_VERIFY_CERT_STORE: c_int = 106;
  #[cfg(ossl300)]
  pub const SSL_CTRL_GET_PEER_TMP_KEY: c_int = 109;
  #[cfg(ossl110)]
 +pub const SSL_CTRL_SET_DH_AUTO: c_int = 118;
 +#[cfg(ossl110)]
  pub const SSL_CTRL_GET_EXTMS_SUPPORT: c_int = 122;
- #[cfg(any(ossl110, libressl261))]
+-#[cfg(any(ossl110, libressl261))]
++#[cfg(any(ossl110, libressl))]
  pub const SSL_CTRL_SET_MIN_PROTO_VERSION: c_int = 123;
-@@ -364,22 +368,36 @@ pub const SSL_CTRL_GET_MAX_PROTO_VERSION: c_int = 131;
+-#[cfg(any(ossl110, libressl261))]
++#[cfg(any(ossl110, libressl))]
+ pub const SSL_CTRL_SET_MAX_PROTO_VERSION: c_int = 124;
+-#[cfg(any(ossl110g, libressl270))]
++#[cfg(any(ossl110g, libressl))]
+ pub const SSL_CTRL_GET_MIN_PROTO_VERSION: c_int = 130;
+-#[cfg(any(ossl110g, libressl270))]
++#[cfg(any(ossl110g, libressl))]
+ pub const SSL_CTRL_GET_MAX_PROTO_VERSION: c_int = 131;
  #[cfg(ossl300)]
  pub const SSL_CTRL_GET_TMP_KEY: c_int = 133;
  
@@ -1961,7 +4357,7 @@ index 38d2184b4..407945404 100644
  pub unsafe fn SSL_CTX_add_extra_chain_cert(ctx: *mut SSL_CTX, x509: *mut X509) -> c_long {
      SSL_CTX_ctrl(ctx, SSL_CTRL_EXTRA_CHAIN_CERT, 0, x509 as *mut c_void)
  }
-@@ -403,6 +421,14 @@ pub unsafe fn SSL_set0_verify_cert_store(ssl: *mut SSL, st: *mut X509_STORE) ->
+@@ -403,6 +417,14 @@ pub unsafe fn SSL_set0_verify_cert_store(ssl: *mut SSL, st: *mut X509_STORE) ->
  
  cfg_if! {
      if #[cfg(ossl111)] {
@@ -1976,15 +4372,33 @@ index 38d2184b4..407945404 100644
          pub unsafe fn SSL_CTX_set1_groups_list(ctx: *mut SSL_CTX, s: *const c_char) -> c_long {
              SSL_CTX_ctrl(
                  ctx,
-@@ -413,6 +439,7 @@ cfg_if! {
+@@ -411,8 +433,9 @@ cfg_if! {
+                 s as *const c_void as *mut c_void,
+             )
          }
-     } else if #[cfg(libressl251)] {
+-    } else if #[cfg(libressl251)] {
++    } else if #[cfg(libressl)] {
          extern "C" {
 +            pub fn SSL_set1_groups_list(ctx: *mut SSL, list: *const c_char) -> c_int;
              pub fn SSL_CTX_set1_groups_list(ctx: *mut SSL_CTX, s: *const c_char) -> c_int;
          }
      }
-@@ -581,11 +608,13 @@ pub unsafe fn SSL_CTX_set_read_ahead(ctx: *mut SSL_CTX, m: c_long) -> c_long {
+@@ -529,11 +552,11 @@ pub const SSL_CLIENT_HELLO_ERROR: c_int = 0;
+ #[cfg(ossl111)]
+ pub const SSL_CLIENT_HELLO_RETRY: c_int = -1;
+ 
+-#[cfg(any(ossl111, libressl340))]
++#[cfg(any(ossl111, libressl))]
+ pub const SSL_READ_EARLY_DATA_ERROR: c_int = 0;
+-#[cfg(any(ossl111, libressl340))]
++#[cfg(any(ossl111, libressl))]
+ pub const SSL_READ_EARLY_DATA_SUCCESS: c_int = 1;
+-#[cfg(any(ossl111, libressl340))]
++#[cfg(any(ossl111, libressl))]
+ pub const SSL_READ_EARLY_DATA_FINISH: c_int = 2;
+ 
+ cfg_if! {
+@@ -581,11 +604,13 @@ pub unsafe fn SSL_CTX_set_read_ahead(ctx: *mut SSL_CTX, m: c_long) -> c_long {
  
  #[allow(clashing_extern_declarations)]
  extern "C" {
@@ -1998,11 +4412,32 @@ index 38d2184b4..407945404 100644
      #[deprecated(note = "use SSL_set_tmp_dh_callback__fixed_rust instead")]
      pub fn SSL_set_tmp_dh_callback(
          ctx: *mut SSL,
+@@ -620,7 +645,6 @@ extern "C" {
+     ) -> c_long;
+ 
+     #[deprecated(note = "use SSL_CTX_set_alpn_select_cb__fixed_rust instead")]
+-    #[cfg(any(ossl102, libressl261))]
+     pub fn SSL_CTX_set_alpn_select_cb(
+         ssl: *mut SSL_CTX,
+         cb: extern "C" fn(
 diff --git a/src/tls1.rs b/src/tls1.rs
-index 7ff0b9df9..99e545087 100644
+index 7ff0b9d..b2a6b9c 100644
 --- a/src/tls1.rs
 +++ b/src/tls1.rs
-@@ -109,6 +109,7 @@ pub unsafe fn SSL_CTX_set_tlsext_status_cb(
+@@ -7,11 +7,10 @@ use super::*;
+ pub const TLS1_VERSION: c_int = 0x301;
+ pub const TLS1_1_VERSION: c_int = 0x302;
+ pub const TLS1_2_VERSION: c_int = 0x303;
+-#[cfg(any(ossl111, libressl340))]
++#[cfg(any(ossl111, libressl))]
+ pub const TLS1_3_VERSION: c_int = 0x304;
+ 
+ pub const DTLS1_VERSION: c_int = 0xFEFF;
+-#[cfg(any(ossl102, libressl332))]
+ pub const DTLS1_2_VERSION: c_int = 0xFEFD;
+ 
+ pub const TLS1_AD_DECODE_ERROR: c_int = 50;
+@@ -109,6 +108,7 @@ pub unsafe fn SSL_CTX_set_tlsext_status_cb(
      )
  }
  
@@ -2011,9 +4446,18 @@ index 7ff0b9df9..99e545087 100644
      SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG, 0, arg)
  }
 diff --git a/src/types.rs b/src/types.rs
-index 10c8f6771..76f94809f 100644
+index 10c8f67..8b8fd9a 100644
 --- a/src/types.rs
 +++ b/src/types.rs
+@@ -3,7 +3,7 @@ use libc::*;
+ use super::*;
+ 
+ cfg_if! {
+-    if #[cfg(any(ossl110, libressl280))] {
++    if #[cfg(any(ossl110, libressl))] {
+         pub enum EVP_PKEY {}
+     } else {
+         #[repr(C)]
 @@ -19,3 +19,9 @@ cfg_if! {
          }
      }
@@ -2024,26 +4468,36 @@ index 10c8f6771..76f94809f 100644
 +        pub enum EVP_SIGNATURE {}
 +    }
 +}
+diff --git a/src/x509.rs b/src/x509.rs
+index 714b06c..ba0618c 100644
+--- a/src/x509.rs
++++ b/src/x509.rs
+@@ -7,7 +7,7 @@ pub const X509_FILETYPE_DEFAULT: c_int = 3;
+ pub const ASN1_R_HEADER_TOO_LONG: c_int = 123;
+ 
+ cfg_if! {
+-    if #[cfg(not(any(ossl110, libressl350)))] {
++    if #[cfg(not(any(ossl110, libressl)))] {
+         pub const X509_LU_FAIL: c_int = 0;
+         pub const X509_LU_X509: c_int = 1;
+         pub const X509_LU_CRL: c_int = 2;
 diff --git a/src/x509_vfy.rs b/src/x509_vfy.rs
-index 2fa176fed..a576c9a99 100644
+index 2fa176f..1d66cd5 100644
 --- a/src/x509_vfy.rs
 +++ b/src/x509_vfy.rs
-@@ -76,11 +76,11 @@ pub const X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM: c_int = 59;
+@@ -76,11 +76,8 @@ pub const X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM: c_int = 59;
  pub const X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED: c_int = 60;
  #[cfg(ossl102)]
  pub const X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256: c_int = 61;
 -#[cfg(ossl102)]
-+#[cfg(any(ossl102, libressl251))]
  pub const X509_V_ERR_HOSTNAME_MISMATCH: c_int = 62;
 -#[cfg(ossl102)]
-+#[cfg(any(ossl102, libressl251))]
  pub const X509_V_ERR_EMAIL_MISMATCH: c_int = 63;
 -#[cfg(ossl102)]
-+#[cfg(any(ossl102, libressl251))]
  pub const X509_V_ERR_IP_ADDRESS_MISMATCH: c_int = 64;
  cfg_if! {
      if #[cfg(ossl110)] {
-@@ -102,7 +102,7 @@ pub const X509_V_ERR_INVALID_CA: c_int = 79;
+@@ -102,7 +99,7 @@ pub const X509_V_ERR_INVALID_CA: c_int = 79;
  
  #[cfg(not(any(ossl110, libressl370)))]
  pub const X509_V_FLAG_CB_ISSUER_CHECK: c_ulong = 0x1;
@@ -2052,27 +4506,53 @@ index 2fa176fed..a576c9a99 100644
  pub const X509_V_FLAG_CB_ISSUER_CHECK: c_ulong = 0x0;
  pub const X509_V_FLAG_USE_CHECK_TIME: c_ulong = 0x2;
  pub const X509_V_FLAG_CRL_CHECK: c_ulong = 0x4;
-@@ -118,7 +118,7 @@ pub const X509_V_FLAG_NOTIFY_POLICY: c_ulong = 0x800;
+@@ -118,7 +115,6 @@ pub const X509_V_FLAG_NOTIFY_POLICY: c_ulong = 0x800;
  pub const X509_V_FLAG_EXTENDED_CRL_SUPPORT: c_ulong = 0x1000;
  pub const X509_V_FLAG_USE_DELTAS: c_ulong = 0x2000;
  pub const X509_V_FLAG_CHECK_SS_SIGNATURE: c_ulong = 0x4000;
 -#[cfg(ossl102)]
-+#[cfg(any(ossl102, libressl251))]
  pub const X509_V_FLAG_TRUSTED_FIRST: c_ulong = 0x8000;
  #[cfg(ossl102)]
  pub const X509_V_FLAG_SUITEB_128_LOS_ONLY: c_ulong = 0x10000;
-@@ -126,11 +126,11 @@ pub const X509_V_FLAG_SUITEB_128_LOS_ONLY: c_ulong = 0x10000;
+@@ -126,11 +122,10 @@ pub const X509_V_FLAG_SUITEB_128_LOS_ONLY: c_ulong = 0x10000;
  pub const X509_V_FLAG_SUITEB_192_LOS: c_ulong = 0x20000;
  #[cfg(ossl102)]
  pub const X509_V_FLAG_SUITEB_128_LOS: c_ulong = 0x30000;
 -#[cfg(ossl102)]
-+#[cfg(any(ossl102, libressl251))]
  pub const X509_V_FLAG_PARTIAL_CHAIN: c_ulong = 0x80000;
 -#[cfg(ossl110)]
-+#[cfg(any(ossl110, libressl251))]
++#[cfg(any(ossl110, libressl))]
  pub const X509_V_FLAG_NO_ALT_CHAINS: c_ulong = 0x100000;
 -#[cfg(ossl110)]
-+#[cfg(any(ossl110, libressl251))]
++#[cfg(any(ossl110, libressl))]
  pub const X509_V_FLAG_NO_CHECK_TIME: c_ulong = 0x200000;
  
  pub unsafe fn X509_LOOKUP_add_dir(
+diff --git a/src/x509v3.rs b/src/x509v3.rs
+index 230dea1..163486a 100644
+--- a/src/x509v3.rs
++++ b/src/x509v3.rs
+@@ -21,15 +21,10 @@ pub const GEN_URI: c_int = 6;
+ pub const GEN_IPADD: c_int = 7;
+ pub const GEN_RID: c_int = 8;
+ 
+-#[cfg(any(ossl102, libressl261))]
+ pub const X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT: c_uint = 0x1;
+-#[cfg(any(ossl102, libressl261))]
+ pub const X509_CHECK_FLAG_NO_WILDCARDS: c_uint = 0x2;
+-#[cfg(any(ossl102, libressl261))]
+ pub const X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS: c_uint = 0x4;
+-#[cfg(any(ossl102, libressl261))]
+ pub const X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS: c_uint = 0x8;
+-#[cfg(any(ossl102, libressl261))]
+ pub const X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS: c_uint = 0x10;
+ #[cfg(ossl110)]
+ pub const X509_CHECK_FLAG_NEVER_CHECK_SUBJECT: c_uint = 0x20;
+@@ -55,7 +50,6 @@ pub const EXFLAG_CRITICAL: u32 = 0x200;
+ pub const EXFLAG_PROXY: u32 = 0x400;
+ pub const EXFLAG_INVALID_POLICY: u32 = 0x800;
+ pub const EXFLAG_FRESHEST: u32 = 0x1000;
+-#[cfg(any(ossl102, libressl261))]
+ pub const EXFLAG_SS: u32 = 0x2000;
+ 
+ pub const X509v3_KU_DIGITAL_SIGNATURE: u32 = 0x0080;
