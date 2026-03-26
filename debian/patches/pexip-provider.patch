@@ -1,0 +1,44 @@
+Add additional provider symbols for rust-openssl
+diff --git a/src/handwritten/evp.rs b/src/handwritten/evp.rs
+index 26498487c..3356b3880 100644
+--- a/src/handwritten/evp.rs
++++ b/src/handwritten/evp.rs
+@@ -7,6 +7,7 @@ cfg_if! {
+             pub fn EVP_MD_get_block_size(md: *const EVP_MD) -> c_int;
+             pub fn EVP_MD_get_size(md: *const EVP_MD) -> c_int;
+             pub fn EVP_MD_get_type(md: *const EVP_MD) -> c_int;
++            pub fn EVP_MD_get0_provider(md: *const EVP_MD) -> *const OSSL_PROVIDER;
+ 
+             pub fn EVP_MD_CTX_get0_md(ctx: *const EVP_MD_CTX) -> *const EVP_MD;
+ 
+diff --git a/src/handwritten/params.rs b/src/handwritten/params.rs
+index 8fae2f218..89648a2bf 100644
+--- a/src/handwritten/params.rs
++++ b/src/handwritten/params.rs
+@@ -15,6 +15,11 @@ extern "C" {
+         buf: *mut c_void,
+         bsize: size_t,
+     ) -> OSSL_PARAM;
++    pub fn OSSL_PARAM_construct_utf8_ptr(
++        key: *const c_char,
++        buf: *mut *mut c_char,
++        bsize: size_t,
++    ) -> OSSL_PARAM;
+ 
+     pub fn OSSL_PARAM_locate(p: *mut OSSL_PARAM, key: *const c_char) -> *mut OSSL_PARAM;
+     pub fn OSSL_PARAM_locate_const(
+diff --git a/src/handwritten/provider.rs b/src/handwritten/provider.rs
+index 3e18a02be..cd029a538 100644
+--- a/src/handwritten/provider.rs
++++ b/src/handwritten/provider.rs
+@@ -17,4 +17,10 @@ extern "C" {
+         ctx: *mut OSSL_LIB_CTX,
+         path: *const c_char,
+     ) -> c_int;
++
++    #[cfg(ossl300)]
++    pub fn OSSL_PROVIDER_get_params(
++        prov: *const OSSL_PROVIDER,
++        params: *mut OSSL_PARAM,
++    ) -> c_int;
+ }
