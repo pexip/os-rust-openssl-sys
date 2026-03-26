@@ -1,3 +1,4 @@
+Make rust-openssl-sys work when deprecated symbols are removed.
 diff --git a/build/cfgs.rs b/build/cfgs.rs
 index ca99707..14118b0 100644
 --- a/build/cfgs.rs
