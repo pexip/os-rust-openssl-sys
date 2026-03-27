@@ -1,6 +1,7 @@
 rust-openssl-sys (0.9.107-1+pexip25u4) pexip-trixie; urgency=medium
 
   * d/p: add additional provider symbols
+  * d/p: add additional MD symbols
 
  -- Huw Jones <huw@pexip.com>  Thu, 26 Mar 2026 17:05:15 +0000
 

@@ -1,0 +1,13 @@
+Add additional MD symbols for rust-openssl
+diff --git a/src/handwritten/evp.rs b/src/handwritten/evp.rs
+index 26498487c..3356b3880 100644
+--- a/src/handwritten/evp.rs
++++ b/src/handwritten/evp.rs
+@@ -7,6 +7,7 @@ cfg_if! {
+             pub fn EVP_MD_get_block_size(md: *const EVP_MD) -> c_int;
+             pub fn EVP_MD_get_size(md: *const EVP_MD) -> c_int;
+             pub fn EVP_MD_get_type(md: *const EVP_MD) -> c_int;
++            pub fn EVP_MD_get0_name(md: *const EVP_MD) -> *const c_char;
+             pub fn EVP_MD_get0_provider(md: *const EVP_MD) -> *const OSSL_PROVIDER;
+ 
+             pub fn EVP_MD_CTX_get0_md(ctx: *const EVP_MD_CTX) -> *const EVP_MD;
