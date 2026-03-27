@@ -1,0 +1,13 @@
+Add EVP_CIPHER_up_ref for rust-openssl
+diff --git a/src/handwritten/evp.rs
+index 26498487c..4eb7c1bfe 100644
+--- a/src/handwritten/evp.rs
++++ b/src/handwritten/evp.rs
+@@ -19,6 +21,7 @@ cfg_if! {
+                 algorithm: *const c_char,
+                 properties: *const c_char,
+             ) -> *mut EVP_CIPHER;
++            pub fn EVP_CIPHER_up_ref(cipher: *mut EVP_CIPHER) -> c_int;
+             pub fn EVP_CIPHER_free(cipher: *mut EVP_CIPHER);
+ 
+             pub fn EVP_CIPHER_CTX_get0_cipher(ctx: *const EVP_CIPHER_CTX) -> *const EVP_CIPHER;
