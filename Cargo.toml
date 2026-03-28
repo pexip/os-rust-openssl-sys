@@ -47,7 +47,7 @@ name = "openssl_sys"
 path = "src/lib.rs"
 
 [dependencies.aws-lc-sys]
-version = "0.27"
+version = "0.39"
 features = ["ssl"]
 optional = true
 
